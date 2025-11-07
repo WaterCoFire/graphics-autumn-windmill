@@ -9,7 +9,8 @@
 #include <vector>
 #include <cmath>
 
-GLuint loadShader(const char* vertexPath, const char* fragmentPath) {
+// 加载着色器程序函数
+GLuint loadShader(const char *vertexPath, const char *fragmentPath) {
     std::string vertexCode, fragmentCode;
     std::ifstream vShaderFile, fShaderFile;
     vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
@@ -24,12 +25,13 @@ GLuint loadShader(const char* vertexPath, const char* fragmentPath) {
         fShaderFile.close();
         vertexCode = vShaderStream.str();
         fragmentCode = fShaderStream.str();
-    } catch (std::ifstream::failure& e) {
+    } catch (std::ifstream::failure &e) {
         std::cout << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ" << std::endl;
     }
-    const char* vShaderCode = vertexCode.c_str();
-    const char* fShaderCode = fragmentCode.c_str();
+    const char *vShaderCode = vertexCode.c_str();
+    const char *fShaderCode = fragmentCode.c_str();
 
+    // 创建顶点着色器并编译
     GLuint vertex = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertex, 1, &vShaderCode, NULL);
     glCompileShader(vertex);
@@ -41,6 +43,7 @@ GLuint loadShader(const char* vertexPath, const char* fragmentPath) {
         std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
 
+    // 创建片段着色器并编译
     GLuint fragment = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragment, 1, &fShaderCode, NULL);
     glCompileShader(fragment);
@@ -50,6 +53,7 @@ GLuint loadShader(const char* vertexPath, const char* fragmentPath) {
         std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
 
+    // 创建着色器程序并链接
     GLuint shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertex);
     glAttachShader(shaderProgram, fragment);
@@ -59,50 +63,78 @@ GLuint loadShader(const char* vertexPath, const char* fragmentPath) {
         glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
         std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
     }
+
+    // 编译完成后删除着色器对象，程序已链接
     glDeleteShader(vertex);
     glDeleteShader(fragment);
     return shaderProgram;
 }
 
-void generateCylinder(float radius, float height, int slices, std::vector<float>& vertexData, std::vector<GLuint>& indices) {
+// 生成圆柱体的顶点和索引
+void generateCylinder(float radius, float height, int slices, std::vector<float> &vertexData,
+                      std::vector<GLuint> &indices) {
     vertexData.clear();
     indices.clear();
-    float thetaStep = 2.0f * 3.141592653589793f / slices;
+    float thetaStep = 2.0f * 3.141592653589793f / slices; // 每一片的角度
 
-    // Bottom face
-    vertexData.push_back(0.0f); vertexData.push_back(0.0f); vertexData.push_back(0.0f);
-    vertexData.push_back(0.0f); vertexData.push_back(-1.0f); vertexData.push_back(0.0f);
+    // 底面中心顶点
+    vertexData.push_back(0.0f);     // x
+    vertexData.push_back(0.0f);     // y
+    vertexData.push_back(0.0f);     // z
+    vertexData.push_back(0.0f);     // 法向量 x
+    vertexData.push_back(-1.0f);    // 法向量 y
+    vertexData.push_back(0.0f);     // 法向量 z
+
+    // 底面周围顶点
     for (int i = 0; i < slices; ++i) {
         float theta = i * thetaStep;
         float x = radius * std::cos(theta);
         float z = radius * std::sin(theta);
-        vertexData.push_back(x); vertexData.push_back(0.0f); vertexData.push_back(z);
-        vertexData.push_back(0.0f); vertexData.push_back(-1.0f); vertexData.push_back(0.0f);
+        vertexData.push_back(x);
+        vertexData.push_back(0.0f);
+        vertexData.push_back(z);
+        vertexData.push_back(0.0f);
+        vertexData.push_back(-1.0f);
+        vertexData.push_back(0.0f);
     }
+
+    // 底面索引（三角形）
     for (int i = 0; i < slices; ++i) {
         indices.push_back(0);
         indices.push_back(i + 1);
         indices.push_back((i + 1) % slices + 1);
     }
 
-    // Top face
+    // 顶面中心顶点索引
     GLuint topCenterIndex = static_cast<GLuint>(vertexData.size() / 6);
-    vertexData.push_back(0.0f); vertexData.push_back(height); vertexData.push_back(0.0f);
-    vertexData.push_back(0.0f); vertexData.push_back(1.0f); vertexData.push_back(0.0f);
+    vertexData.push_back(0.0f);
+    vertexData.push_back(height);
+    vertexData.push_back(0.0f);
+    vertexData.push_back(0.0f);
+    vertexData.push_back(1.0f);
+    vertexData.push_back(0.0f);
+
+    // 顶面周围顶点
     for (int i = 0; i < slices; ++i) {
         float theta = i * thetaStep;
         float x = radius * std::cos(theta);
         float z = radius * std::sin(theta);
-        vertexData.push_back(x); vertexData.push_back(height); vertexData.push_back(z);
-        vertexData.push_back(0.0f); vertexData.push_back(1.0f); vertexData.push_back(0.0f);
+        vertexData.push_back(x);
+        vertexData.push_back(height);
+        vertexData.push_back(z);
+        vertexData.push_back(0.0f);
+        vertexData.push_back(1.0f);
+        vertexData.push_back(0.0f);
     }
+
+    // 顶面索引
     for (int i = 0; i < slices; ++i) {
         indices.push_back(topCenterIndex);
         indices.push_back(topCenterIndex + (i + 1) % slices + 1);
         indices.push_back(topCenterIndex + i + 1);
     }
 
-    // Side faces
+    // 侧面顶点（下圈）
     GLuint sideBottomStart = static_cast<GLuint>(vertexData.size() / 6);
     for (int i = 0; i < slices; ++i) {
         float theta = i * thetaStep;
@@ -110,9 +142,15 @@ void generateCylinder(float radius, float height, int slices, std::vector<float>
         float z = radius * std::sin(theta);
         float nx = std::cos(theta);
         float nz = std::sin(theta);
-        vertexData.push_back(x); vertexData.push_back(0.0f); vertexData.push_back(z);
-        vertexData.push_back(nx); vertexData.push_back(0.0f); vertexData.push_back(nz);
+        vertexData.push_back(x);
+        vertexData.push_back(0.0f);
+        vertexData.push_back(z);
+        vertexData.push_back(nx);
+        vertexData.push_back(0.0f);
+        vertexData.push_back(nz);
     }
+
+    // 侧面顶点（上圈）
     GLuint sideTopStart = static_cast<GLuint>(vertexData.size() / 6);
     for (int i = 0; i < slices; ++i) {
         float theta = i * thetaStep;
@@ -120,9 +158,15 @@ void generateCylinder(float radius, float height, int slices, std::vector<float>
         float z = radius * std::sin(theta);
         float nx = std::cos(theta);
         float nz = std::sin(theta);
-        vertexData.push_back(x); vertexData.push_back(height); vertexData.push_back(z);
-        vertexData.push_back(nx); vertexData.push_back(0.0f); vertexData.push_back(nz);
+        vertexData.push_back(x);
+        vertexData.push_back(height);
+        vertexData.push_back(z);
+        vertexData.push_back(nx);
+        vertexData.push_back(0.0f);
+        vertexData.push_back(nz);
     }
+
+    // 侧面索引
     for (int i = 0; i < slices; ++i) {
         GLuint bottomLeft = sideBottomStart + i;
         GLuint bottomRight = sideBottomStart + (i + 1) % slices;
@@ -137,30 +181,46 @@ void generateCylinder(float radius, float height, int slices, std::vector<float>
     }
 }
 
-int main(void) {
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+int main() {
+    // GLFW initialization
+    if (!glfwInit())
+        exit(EXIT_FAILURE);
+
+    // Set OpenGL version: 4.1
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4); // Major version num
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1); // Minor version num
+
+    // Use the "Core Profile"
+    // This indicates enabling only modern OpenGL features, with no compatibility for legacy interfaces
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
 #ifdef __APPLE__
+    // macOS specific requirement: Must set "Forward Compatible"
+    // Otherwise, it will crash due to Core Profile being disabled by default
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
-    GLFWwindow* window = glfwCreateWindow(800, 600, "Windmill Action Scene", NULL, NULL);
+
+    // Create GLFW window
+    GLFWwindow *window = glfwCreateWindow(800, 600, "Windmill Action Scene", NULL, NULL);
     if (window == NULL) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
         return -1;
     }
     glfwMakeContextCurrent(window);
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+
+    // GLAD Initialization
+    if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
-    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST); // 开启深度测试
 
+    // Shaders
     GLuint program = loadShader("shader.vert", "shader.frag");
     glUseProgram(program);
 
+    // ===== 获取 uniform 位置 =====
     GLint modelLoc = glGetUniformLocation(program, "model");
     GLint viewLoc = glGetUniformLocation(program, "view");
     GLint projLoc = glGetUniformLocation(program, "proj");
@@ -174,7 +234,7 @@ int main(void) {
     glUniform3f(lightColorLoc, 1.0f, 1.0f, 1.0f);
     glUniform1f(shininessLoc, 32.0f);
 
-    // Tower (cylinder)
+    // ===== 风车塔体（圆柱）Tower (cylinder) =====
     std::vector<float> towerVertexData;
     std::vector<GLuint> towerIndices;
     generateCylinder(1.0f, 10.0f, 32, towerVertexData, towerIndices);
@@ -187,44 +247,44 @@ int main(void) {
     glBufferData(GL_ARRAY_BUFFER, towerVertexData.size() * sizeof(float), towerVertexData.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, towerEBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, towerIndices.size() * sizeof(GLuint), towerIndices.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) 0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) (3 * sizeof(float)));
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
 
     // Cap (cube)
     std::vector<float> capVertexData = {
         // Front
-        -1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f,
-         1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f,
-        -1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f,
+        -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+        1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+        1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+        -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
         // Back
-        -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f,
-         1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f,
+        1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f,
+        1.0f, 1.0f, -1.0f, 0.0f, 0.0f, -1.0f,
+        -1.0f, 1.0f, -1.0f, 0.0f, 0.0f, -1.0f,
         // Left
-        -1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f,
-        -1.0f, -1.0f,  1.0f, -1.0f,  0.0f,  0.0f,
-        -1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f,
-        -1.0f,  1.0f, -1.0f, -1.0f,  0.0f,  0.0f,
+        -1.0f, -1.0f, -1.0f, -1.0f, 0.0f, 0.0f,
+        -1.0f, -1.0f, 1.0f, -1.0f, 0.0f, 0.0f,
+        -1.0f, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f,
+        -1.0f, 1.0f, -1.0f, -1.0f, 0.0f, 0.0f,
         // Right
-         1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f,
-         1.0f, -1.0f,  1.0f,  1.0f,  0.0f,  0.0f,
-         1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f,
-         1.0f,  1.0f, -1.0f,  1.0f,  0.0f,  0.0f,
+        1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f,
+        1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+        1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+        1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 0.0f,
         // Bottom
-        -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f,
-         1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f,
-         1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f,
-        -1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f,
+        -1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f,
+        1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f,
+        1.0f, -1.0f, 1.0f, 0.0f, -1.0f, 0.0f,
+        -1.0f, -1.0f, 1.0f, 0.0f, -1.0f, 0.0f,
         // Top
-        -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f,
-         1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f,
-         1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f,
-        -1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f
+        -1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+        1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+        1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+        -1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f
     };
     std::vector<GLuint> capIndices = {
         0, 1, 2, 0, 2, 3,
@@ -234,6 +294,7 @@ int main(void) {
         16, 17, 18, 16, 18, 19,
         20, 21, 22, 20, 22, 23
     };
+
     GLuint capVAO, capVBO, capEBO;
     glGenVertexArrays(1, &capVAO);
     glGenBuffers(1, &capVBO);
@@ -243,22 +304,24 @@ int main(void) {
     glBufferData(GL_ARRAY_BUFFER, capVertexData.size() * sizeof(float), capVertexData.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, capEBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, capIndices.size() * sizeof(GLuint), capIndices.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) 0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) (3 * sizeof(float)));
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
 
     // Blade (quad)
     std::vector<float> bladeVertexData = {
-        -0.5f, -0.2f, 0.0f, 0.0f, 0.0f, 1.0f,
-        3.5f, -0.2f, 0.0f, 0.0f, 0.0f, 1.0f,
-        3.5f,  0.2f, 0.0f, 0.0f, 0.0f, 1.0f,
-        -0.5f,  0.2f, 0.0f, 0.0f, 0.0f, 1.0f
+        -0.2f, 0.0f, 0.0f,  0.0f, 0.0f, 1.0f,  // 左下
+         0.2f, 0.0f, 0.0f,  0.0f, 0.0f, 1.0f,  // 右下
+         0.2f, 3.5f, 0.0f,  0.0f, 0.0f, 1.0f,  // 右上
+        -0.2f, 3.5f, 0.0f,  0.0f, 0.0f, 1.0f   // 左上
     };
+
     std::vector<GLuint> bladeIndices = {
         0, 1, 2, 0, 2, 3
     };
+
     GLuint bladeVAO, bladeVBO, bladeEBO;
     glGenVertexArrays(1, &bladeVAO);
     glGenBuffers(1, &bladeVBO);
@@ -268,40 +331,45 @@ int main(void) {
     glBufferData(GL_ARRAY_BUFFER, bladeVertexData.size() * sizeof(float), bladeVertexData.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bladeEBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, bladeIndices.size() * sizeof(GLuint), bladeIndices.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) 0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) (3 * sizeof(float)));
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
 
+    // Display control tip in console
     std::cout << "Controls:\n";
     std::cout << "Camera: W/S/A/D/Q/E to move (forward/back/left/right/down/up)\n";
     std::cout << "Light: Arrow keys left/right/up/down for x/y, comma/period for z\n";
-    std::cout << "+/- to increase/decrease movement speed\n";
+    std::cout << "Cap rotation speed: + to increase, - to decrease\n";
+    std::cout << "Blade rotation speed: I to increase, K to decrease\n";
     std::cout << "R to reverse direction (press once to toggle)\n";
     std::cout << "ESC to exit\n";
 
-    float lastTime = 0.0f;
-    glm::vec3 cameraPos = glm::vec3(0.0f, 5.0f, 20.0f);
-    glm::vec3 lookAtPos = glm::vec3(0.0f, 5.0f, 0.0f);
-    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-    glm::vec3 lightPos = glm::vec3(5.0f, 5.0f, 5.0f);
-    float speedMultiplier = 1.0f;
-    int direction = 1;
-    float capAngle = 0.0f;
-    float bladeAngle = 0.0f;
-    float capRotationSpeed = 10.0f; // degrees/sec
-    float bladeRotationSpeed = 60.0f; // degrees/sec
-    float moveSpeed = 10.0f;
-    bool rPressed = false;
+    // Variables
+    float lastTime = 0.0f;                                    // 上一帧时间
+    glm::vec3 cameraPos = glm::vec3(0.0f, 5.0f, 20.0f); // 摄像机位置
+    glm::vec3 lookAtPos = glm::vec3(0.0f, 5.0f, 0.0f);  // 摄像机观察点
+    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);         // 上方向
+    glm::vec3 lightPos = glm::vec3(5.0f, 5.0f, 5.0f);   // 光源位置
+    int direction = 1;                                        // 旋转方向
+    float capAngle = 0.0f;                                    // 风车帽旋转角度
+    float bladeAngle = 0.0f;                                  // 叶片旋转角度
+    float capRotationSpeed = 10.0f;                           // 风车帽旋转速度（度/秒）degrees/sec
+    float bladeRotationSpeed = 60.0f;                         // 风车叶片旋转速度（度/秒）degrees/sec
+    float moveSpeed = 10.0f;                                  // 摄像机移动速度
+    bool rPressed = false;                                    // R键按下标志
 
+
+    // Main loop
     while (!glfwWindowShouldClose(window)) {
         float currentTime = static_cast<float>(glfwGetTime());
         float deltaTime = currentTime - lastTime;
         lastTime = currentTime;
 
-        glfwPollEvents();
+        glfwPollEvents(); // 处理事件
 
+        // ESC 退出
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
             glfwSetWindowShouldClose(window, true);
         }
@@ -322,13 +390,22 @@ int main(void) {
         if (glfwGetKey(window, GLFW_KEY_COMMA) == GLFW_PRESS) lightPos.z -= moveSpeed * deltaTime;
         if (glfwGetKey(window, GLFW_KEY_PERIOD) == GLFW_PRESS) lightPos.z += moveSpeed * deltaTime;
 
-        // Speed and direction
-        if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) speedMultiplier += 0.1f * deltaTime;
-        if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) speedMultiplier -= 0.1f * deltaTime;
-        if (speedMultiplier < 0.1f) speedMultiplier = 0.1f;
+        // Cap 旋转速度
+        if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) capRotationSpeed += 50.0f * deltaTime;
+        if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) capRotationSpeed -= 50.0f * deltaTime;
+        if (capRotationSpeed < 0.0f) capRotationSpeed = 0.0f;
+        if (capRotationSpeed > 500.0f) capRotationSpeed = 500.0f;
+
+        // Blade 旋转速度
+        if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) bladeRotationSpeed += 100.0f * deltaTime;
+        if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) bladeRotationSpeed -= 100.0f * deltaTime;
+        if (bladeRotationSpeed < 0.0f) bladeRotationSpeed = 0.0f;
+        if (bladeRotationSpeed > 1000.0f) bladeRotationSpeed = 1000.0f;
+
+        // Direction control
         if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
             if (!rPressed) {
-                direction = -direction;
+                direction = -direction; // 翻转旋转方向
                 rPressed = true;
             }
         } else {
@@ -336,11 +413,12 @@ int main(void) {
         }
 
         // Update angles
-        capAngle += direction * capRotationSpeed * deltaTime * speedMultiplier;
-        bladeAngle += direction * bladeRotationSpeed * deltaTime * speedMultiplier;
+        capAngle += direction * capRotationSpeed * deltaTime;
+        bladeAngle += direction * bladeRotationSpeed * deltaTime;
         capAngle = std::fmod(capAngle, 360.0f);
         bladeAngle = std::fmod(bladeAngle, 360.0f);
 
+        // ===== 渲染 =====
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -371,11 +449,13 @@ int main(void) {
         glBindVertexArray(capVAO);
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(capIndices.size()), GL_UNSIGNED_INT, 0);
 
-        // Draw blades
+        // Draw 4 blades
         glUniform3f(objectColorLoc, 0.0f, 0.0f, 1.0f);
         for (int i = 0; i < 4; ++i) {
             glm::mat4 bladeModel = capModel;
-            bladeModel = glm::translate(bladeModel, glm::vec3(0.0f, 0.0f, 1.5f));
+            // 平移到方块侧面中心，稍微留间隙
+            bladeModel = glm::translate(bladeModel, glm::vec3(0.0f, 0.0f, 1.05f));
+            // 围绕 Z 轴旋转叶片
             bladeModel = glm::rotate(bladeModel, glm::radians(bladeAngle + i * 90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
             normalMat = glm::transpose(glm::inverse(glm::mat3(bladeModel)));
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(bladeModel));
@@ -384,10 +464,11 @@ int main(void) {
             glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(bladeIndices.size()), GL_UNSIGNED_INT, 0);
         }
 
-        glBindVertexArray(0);
+        glBindVertexArray(0); // 交换缓冲区显示
         glfwSwapBuffers(window);
     }
 
+    // Cleanup resources
     glDeleteVertexArrays(1, &towerVAO);
     glDeleteBuffers(1, &towerVBO);
     glDeleteBuffers(1, &towerEBO);
