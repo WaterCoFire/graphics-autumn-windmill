@@ -4,7 +4,7 @@ project(graphics_action_scene)
 set(CMAKE_CXX_STANDARD 17)
 
 # Public include directories
-include_directories(graphics_action_scene include include/glad include/GLFW include/glm include/KNR)
+include_directories(common include include/glad include/GLFW include/glm include/KNR)
 
 # Detect OS
 if (WIN32)
@@ -55,8 +55,8 @@ elseif (WIN32)
 endif ()
 
 # Copy shader files to the build directory (cmake-build-debug)
-#file(COPY
-#        main.vert
-#        main.frag
-#        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
-#)
+file(COPY
+        shader.vert
+        shader.frag
+        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+)
