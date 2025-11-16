@@ -9,7 +9,7 @@
 #include <vector>
 #include <cmath>
 
-// 加载着色器程序函数
+// Function for loading vertex & fragment shaders
 GLuint loadShader(const char *vertexPath, const char *fragmentPath) {
     std::string vertexCode, fragmentCode;
     std::ifstream vShaderFile, fShaderFile;
@@ -31,7 +31,7 @@ GLuint loadShader(const char *vertexPath, const char *fragmentPath) {
     const char *vShaderCode = vertexCode.c_str();
     const char *fShaderCode = fragmentCode.c_str();
 
-    // 创建顶点着色器并编译
+    // Create vertex shader and compile
     GLuint vertex = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertex, 1, &vShaderCode, nullptr);
     glCompileShader(vertex);
@@ -43,7 +43,7 @@ GLuint loadShader(const char *vertexPath, const char *fragmentPath) {
         std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
 
-    // 创建片段着色器并编译
+    // Create fragment shader and compile
     GLuint fragment = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragment, 1, &fShaderCode, nullptr);
     glCompileShader(fragment);
@@ -53,7 +53,7 @@ GLuint loadShader(const char *vertexPath, const char *fragmentPath) {
         std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
 
-    // 创建着色器程序并链接
+    // Create shader application and link it
     GLuint shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertex);
     glAttachShader(shaderProgram, fragment);
@@ -64,28 +64,28 @@ GLuint loadShader(const char *vertexPath, const char *fragmentPath) {
         std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
     }
 
-    // 编译完成后删除着色器对象，程序已链接
+    // Delete shader objects after compilation is complete
     glDeleteShader(vertex);
     glDeleteShader(fragment);
     return shaderProgram;
 }
 
-// 生成圆柱体的顶点和索引
+// Generate vertices and indices of the cylinder
 void generateCylinder(float radius, float height, int slices, std::vector<float> &vertexData,
                       std::vector<GLuint> &indices) {
     vertexData.clear();
     indices.clear();
-    float thetaStep = 2.0f * 3.141592653589793f / slices; // 每一片的角度
+    float thetaStep = 2.0f * 3.141592653589793f / slices; // The angle of each piece
 
-    // 底面中心顶点
-    vertexData.push_back(0.0f);     // x
-    vertexData.push_back(0.0f);     // y
-    vertexData.push_back(0.0f);     // z
-    vertexData.push_back(0.0f);     // 法向量 x
-    vertexData.push_back(-1.0f);    // 法向量 y
-    vertexData.push_back(0.0f);     // 法向量 z
+    // Center vertex of the base
+    vertexData.push_back(0.0f); // x
+    vertexData.push_back(0.0f); // y
+    vertexData.push_back(0.0f); // z
+    vertexData.push_back(0.0f); // Normal vector x
+    vertexData.push_back(-1.0f); // Normal vector y
+    vertexData.push_back(0.0f); // Normal vector z
 
-    // 底面周围顶点
+    // Vertices around the base
     for (int i = 0; i < slices; ++i) {
         float theta = i * thetaStep;
         float x = radius * std::cos(theta);
@@ -98,14 +98,14 @@ void generateCylinder(float radius, float height, int slices, std::vector<float>
         vertexData.push_back(0.0f);
     }
 
-    // 底面索引（三角形）
+    // Base indices (triangle)
     for (int i = 0; i < slices; ++i) {
         indices.push_back(0);
         indices.push_back(i + 1);
         indices.push_back((i + 1) % slices + 1);
     }
 
-    // 顶面中心顶点索引
+    // Index of the central vertex on the top face
     GLuint topCenterIndex = static_cast<GLuint>(vertexData.size() / 6);
     vertexData.push_back(0.0f);
     vertexData.push_back(height);
@@ -114,7 +114,7 @@ void generateCylinder(float radius, float height, int slices, std::vector<float>
     vertexData.push_back(1.0f);
     vertexData.push_back(0.0f);
 
-    // 顶面周围顶点
+    // Vertices around the top face
     for (int i = 0; i < slices; ++i) {
         float theta = i * thetaStep;
         float x = radius * std::cos(theta);
@@ -127,14 +127,14 @@ void generateCylinder(float radius, float height, int slices, std::vector<float>
         vertexData.push_back(0.0f);
     }
 
-    // 顶面索引
+    // Top face index
     for (int i = 0; i < slices; ++i) {
         indices.push_back(topCenterIndex);
         indices.push_back(topCenterIndex + (i + 1) % slices + 1);
         indices.push_back(topCenterIndex + i + 1);
     }
 
-    // 侧面顶点（下圈）
+    // Side vertex (lower circle)
     GLuint sideBottomStart = static_cast<GLuint>(vertexData.size() / 6);
     for (int i = 0; i < slices; ++i) {
         float theta = i * thetaStep;
@@ -150,7 +150,7 @@ void generateCylinder(float radius, float height, int slices, std::vector<float>
         vertexData.push_back(nz);
     }
 
-    // 侧面顶点（上圈）
+    // Side vertex (upper circle)
     GLuint sideTopStart = static_cast<GLuint>(vertexData.size() / 6);
     for (int i = 0; i < slices; ++i) {
         float theta = i * thetaStep;
@@ -166,7 +166,7 @@ void generateCylinder(float radius, float height, int slices, std::vector<float>
         vertexData.push_back(nz);
     }
 
-    // 侧面索引
+    // Side indices
     for (int i = 0; i < slices; ++i) {
         GLuint bottomLeft = sideBottomStart + i;
         GLuint bottomRight = sideBottomStart + (i + 1) % slices;
@@ -214,13 +214,13 @@ int main() {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
-    glEnable(GL_DEPTH_TEST); // 开启深度测试
+    glEnable(GL_DEPTH_TEST);
 
     // Shaders
     GLuint program = loadShader("shader.vert", "shader.frag");
     glUseProgram(program);
 
-    // ===== 获取 uniform 位置 =====
+    // Get uniform location
     GLint modelLoc = glGetUniformLocation(program, "model");
     GLint viewLoc = glGetUniformLocation(program, "view");
     GLint projLoc = glGetUniformLocation(program, "proj");
@@ -234,7 +234,7 @@ int main() {
     glUniform3f(lightColorLoc, 1.0f, 1.0f, 1.0f);
     glUniform1f(shininessLoc, 32.0f);
 
-    // ===== 风车塔体（圆柱）Tower (cylinder) =====
+    // Tower (cylinder)
     std::vector<float> towerVertexData;
     std::vector<GLuint> towerIndices;
     generateCylinder(1.0f, 10.0f, 32, towerVertexData, towerIndices);
@@ -312,10 +312,10 @@ int main() {
 
     // Blade (quad)
     std::vector<float> bladeVertexData = {
-        -0.2f, 0.0f, 0.0f,  0.0f, 0.0f, 1.0f,  // 左下
-         0.2f, 0.0f, 0.0f,  0.0f, 0.0f, 1.0f,  // 右下
-         0.2f, 3.5f, 0.0f,  0.0f, 0.0f, 1.0f,  // 右上
-        -0.2f, 3.5f, 0.0f,  0.0f, 0.0f, 1.0f   // 左上
+        -0.2f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, // Bottom left
+        0.2f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, // Bottom right
+        0.2f, 3.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Top left
+        -0.2f, 3.5f, 0.0f, 0.0f, 0.0f, 1.0f // Top right
     };
 
     std::vector<GLuint> bladeIndices = {
@@ -347,18 +347,18 @@ int main() {
     std::cout << "ESC to exit\n";
 
     // Variables
-    float lastTime = 0.0f;                                    // 上一帧时间
-    glm::vec3 cameraPos = glm::vec3(0.0f, 5.0f, 20.0f); // 摄像机位置
-    glm::vec3 lookAtPos = glm::vec3(0.0f, 5.0f, 0.0f);  // 摄像机观察点
-    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);         // 上方向
-    glm::vec3 lightPos = glm::vec3(5.0f, 5.0f, 5.0f);   // 光源位置
-    int direction = 1;                                        // 旋转方向
-    float capAngle = 0.0f;                                    // 风车帽旋转角度
-    float bladeAngle = 0.0f;                                  // 叶片旋转角度
-    float capRotationSpeed = 10.0f;                           // 风车帽旋转速度（度/秒）degrees/sec
-    float bladeRotationSpeed = 60.0f;                         // 风车叶片旋转速度（度/秒）degrees/sec
-    float moveSpeed = 10.0f;                                  // 摄像机移动速度
-    bool rPressed = false;                                    // R键按下标志
+    float lastTime = 0.0f; // Last frame time
+    glm::vec3 cameraPos = glm::vec3(0.0f, 5.0f, 20.0f); // Camera position
+    glm::vec3 lookAtPos = glm::vec3(0.0f, 5.0f, 0.0f); // Camera look at (observation point)
+    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f); // Up direction
+    glm::vec3 lightPos = glm::vec3(5.0f, 5.0f, 5.0f); // Light source position
+    int direction = 1; // Rotate direction
+    float capAngle = 0.0f; // Rotation angle of the cap
+    float bladeAngle = 0.0f; // Rotation angle of the blade
+    float capRotationSpeed = 10.0f; // Cap rotation speed, degrees/sec
+    float bladeRotationSpeed = 60.0f; // Blade rotation speed, degrees/sec
+    float moveSpeed = 10.0f; // Camera movement speed
+    bool rPressed = false; // R key pressed signal (R key is used for reversing rotation direction)
 
 
     // Main loop
@@ -367,9 +367,9 @@ int main() {
         float deltaTime = currentTime - lastTime;
         lastTime = currentTime;
 
-        glfwPollEvents(); // 处理事件
+        glfwPollEvents(); // Handle events
 
-        // ESC 退出
+        // ESC quit
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
             glfwSetWindowShouldClose(window, true);
         }
@@ -390,13 +390,13 @@ int main() {
         if (glfwGetKey(window, GLFW_KEY_COMMA) == GLFW_PRESS) lightPos.z -= moveSpeed * deltaTime;
         if (glfwGetKey(window, GLFW_KEY_PERIOD) == GLFW_PRESS) lightPos.z += moveSpeed * deltaTime;
 
-        // Cap 旋转速度
+        // Cap rotation speed
         if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) capRotationSpeed += 50.0f * deltaTime;
         if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) capRotationSpeed -= 50.0f * deltaTime;
         if (capRotationSpeed < 0.0f) capRotationSpeed = 0.0f;
         if (capRotationSpeed > 500.0f) capRotationSpeed = 500.0f;
 
-        // Blade 旋转速度
+        // Blade rotation speed
         if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) bladeRotationSpeed += 100.0f * deltaTime;
         if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) bladeRotationSpeed -= 100.0f * deltaTime;
         if (bladeRotationSpeed < 0.0f) bladeRotationSpeed = 0.0f;
@@ -405,7 +405,7 @@ int main() {
         // Direction control
         if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
             if (!rPressed) {
-                direction = -direction; // 翻转旋转方向
+                direction = -direction; // Reverse rotation direction
                 rPressed = true;
             }
         } else {
@@ -418,7 +418,7 @@ int main() {
         capAngle = std::fmod(capAngle, 360.0f);
         bladeAngle = std::fmod(bladeAngle, 360.0f);
 
-        // ===== 渲染 =====
+        // Rendering
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -453,9 +453,9 @@ int main() {
         glUniform3f(objectColorLoc, 0.0f, 0.0f, 1.0f);
         for (int i = 0; i < 4; ++i) {
             glm::mat4 bladeModel = capModel;
-            // 平移到方块侧面中心，稍微留间隙
+            // Translate to the center of the block's side, leaving a slight gap
             bladeModel = glm::translate(bladeModel, glm::vec3(0.0f, 0.0f, 1.05f));
-            // 围绕 Z 轴旋转叶片
+            // Rotate the blade around the Z-axis
             bladeModel = glm::rotate(bladeModel, glm::radians(bladeAngle + i * 90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
             normalMat = glm::transpose(glm::inverse(glm::mat3(bladeModel)));
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(bladeModel));
@@ -464,7 +464,7 @@ int main() {
             glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(bladeIndices.size()), GL_UNSIGNED_INT, nullptr);
         }
 
-        glBindVertexArray(0); // 交换缓冲区显示
+        glBindVertexArray(0); // Swap buffer display
         glfwSwapBuffers(window);
     }
 
