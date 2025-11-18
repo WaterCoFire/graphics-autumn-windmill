@@ -78,12 +78,12 @@ void generateCylinder(float radius, float height, int slices, std::vector<float>
     float thetaStep = 2.0f * 3.141592653589793f / slices; // The angle of each piece
 
     // Center vertex of the base
-    vertexData.push_back(0.0f); // x
-    vertexData.push_back(0.0f); // y
-    vertexData.push_back(0.0f); // z
-    vertexData.push_back(0.0f); // Normal vector x
+    vertexData.push_back(0.0f);  // x
+    vertexData.push_back(0.0f);  // y
+    vertexData.push_back(0.0f);  // z
+    vertexData.push_back(0.0f);  // Normal vector x
     vertexData.push_back(-1.0f); // Normal vector y
-    vertexData.push_back(0.0f); // Normal vector z
+    vertexData.push_back(0.0f);  // Normal vector z
 
     // Vertices around the base
     for (int i = 0; i < slices; ++i) {
@@ -230,8 +230,14 @@ int main() {
     GLint lightColorLoc = glGetUniformLocation(program, "lightColor");
     GLint objectColorLoc = glGetUniformLocation(program, "objectColor");
     GLint shininessLoc = glGetUniformLocation(program, "shininess");
+    GLint ambientColorLoc = glGetUniformLocation(program, "ambientColor");
 
-    glUniform3f(lightColorLoc, 1.0f, 1.0f, 1.0f);
+    // Controllable light - Green
+    glUniform3f(lightColorLoc, 0.1f, 1.0f, 0.1f);
+
+    // Global ambient color - Warm yellow
+    glUniform3f(ambientColorLoc, 0.5f, 0.4f, 0.3f);
+
     glUniform1f(shininessLoc, 32.0f);
 
     // Tower (cylinder)
