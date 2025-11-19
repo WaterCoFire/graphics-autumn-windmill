@@ -121,15 +121,16 @@ int main() {
     GLint shininessLoc = glGetUniformLocation(program, "shininess");
     GLint ambientColorLoc = glGetUniformLocation(program, "ambientColor");
 
-    // Controllable light - Orange
+    // Controllable light
     glUniform3f(lightColorLoc, 1.0f, 0.5f, 0.1f);
 
     // Global ambient color
     glUniform3f(ambientColorLoc, 0.76f, 0.64f, 0.23f);
 
+    // Shininess
     glUniform1f(shininessLoc, 32.0f);
 
-    // Tower (Quadrangular Frustum)
+    // === Tower (Quadrangular Frustum) ===
     // Prism - height 10.0, top face side length 1.0, bottom face side length 2.0
     std::vector<float> towerVertexData = {
         // Vertex position (x, y, z) + normal vector (nx, ny, nz)
@@ -194,8 +195,9 @@ int main() {
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void *>(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
+    // === End of Tower ===
 
-    // Cap (cube)
+    // === Cap (cube) ===
     std::vector<float> capVertexData = {
         // Front
         -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
@@ -251,8 +253,9 @@ int main() {
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void *>(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
+    // === End of Cap ===
 
-    // Blade (quad)
+    // === Blades (quad) ===
     std::vector<float> bladeVertexData = {
         -0.2f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, // Bottom left
         0.2f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, // Bottom right
@@ -278,8 +281,9 @@ int main() {
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void *>(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
+    // === End of Blade ===
 
-    // Ground (Large Quad Plane)
+    // === Ground (Large Quad Plane) ===
     // Position (x, y, z) + Normal (nx, ny, nz)
     std::vector<float> groundVertexData = {
         -1000.0f, 0.0f, -1000.0f, 0.0f, 1.0f, 0.0f, // Bottom left
@@ -309,6 +313,92 @@ int main() {
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void *>(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
+    // === End of Ground ==
+
+    // === Hub Cylinder (in the center of 4 blades) ===
+    std::vector<float> hubVertexData;
+    std::vector<GLuint> hubIndices;
+    const int segments = 16;
+    const float radius = 0.3f;
+    const float length = 0.5f;
+
+    // Centers: X=0.0, Y=0.0
+    // Front Center (Z = length/2)
+    hubVertexData.insert(hubVertexData.end(), {0.0f, 0.0f, length / 2.0f, 0.0f, 0.0f, 1.0f}); // Index 0
+    // Back Center (Z = -length/2)
+    hubVertexData.insert(hubVertexData.end(), {0.0f, 0.0f, -length / 2.0f, 0.0f, 0.0f, -1.0f}); // Index 1
+
+    // Perimeter vertices
+    for (int i = 0; i < segments; ++i) {
+        float angle = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(segments);
+        float x = radius * std::cos(angle);
+        float y = radius * std::sin(angle);
+
+        // Front perimeter vertex (Z = length/2)
+        hubVertexData.insert(hubVertexData.end(), {x, y, length / 2.0f, 0.0f, 0.0f, 1.0f});
+        // Back perimeter vertex (Z = -length/2)
+        hubVertexData.insert(hubVertexData.end(), {x, y, -length / 2.0f, 0.0f, 0.0f, -1.0f});
+    }
+
+    // Indices for caps
+    for (int i = 0; i < segments; ++i) {
+        GLuint next_i = (i + 1) % segments;
+        GLuint front_curr = 2 + i * 2;
+        GLuint front_next = 2 + next_i * 2;
+        GLuint back_curr = 3 + i * 2;
+        GLuint back_next = 3 + next_i * 2;
+
+        // Front cap triangle fan (using index 0 as center)
+        hubIndices.insert(hubIndices.end(), {0, front_curr, front_next});
+
+        // Back cap triangle fan (using index 1 as center)
+        hubIndices.insert(hubIndices.end(), {1, back_next, back_curr});
+    }
+
+    // Duplicating perimeter vertices for correct side normals
+    GLuint sideStartIndex = hubVertexData.size() / 6;
+    for (int i = 0; i < segments; ++i) {
+        float angle = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(segments);
+        float x = radius * std::cos(angle);
+        float y = radius * std::sin(angle);
+
+        // Side normal (perpendicular to Z-axis)
+        float nx = std::cos(angle);
+        float ny = std::sin(angle);
+
+        GLuint next_i = (i + 1) % segments;
+
+        // Side Quad vertices
+        hubVertexData.insert(hubVertexData.end(), {x, y, length / 2.0f, nx, ny, 0.0f}); // front_curr_side
+        hubVertexData.insert(hubVertexData.end(), {x, y, -length / 2.0f, nx, ny, 0.0f}); // back_curr_side
+
+        // Quad indices
+        GLuint curr_f = sideStartIndex + i * 2;
+        GLuint curr_b = sideStartIndex + i * 2 + 1;
+        GLuint next_f = sideStartIndex + next_i * 2;
+        GLuint next_b = sideStartIndex + next_i * 2 + 1;
+
+        // Triangle 1 - front_curr, front_next, back_curr
+        hubIndices.insert(hubIndices.end(), {curr_f, next_f, curr_b});
+        // Triangle 2 - back_curr, front_next, back_next
+        hubIndices.insert(hubIndices.end(), {curr_b, next_f, next_b});
+    }
+
+    GLuint hubVAO, hubVBO, hubEBO;
+    glGenVertexArrays(1, &hubVAO);
+    glGenBuffers(1, &hubVBO);
+    glGenBuffers(1, &hubEBO);
+    glBindVertexArray(hubVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, hubVBO);
+    glBufferData(GL_ARRAY_BUFFER, hubVertexData.size() * sizeof(float), hubVertexData.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, hubEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, hubIndices.size() * sizeof(GLuint), hubIndices.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), static_cast<void *>(nullptr));
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void *>(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glBindVertexArray(0);
+    // === End of Hub Cylinder ===
 
     // Display control tip in console
     std::cout << "Controls:\n";
@@ -320,12 +410,12 @@ int main() {
     std::cout << "P to pause/play windmill main body rotation\n";
     std::cout << "ESC to exit\n";
 
-    // Variables
+    // Variables (INITIAL)
     float lastTime = 0.0f; // Last frame time
     glm::vec3 cameraPos = glm::vec3(0.0f, 6.5f, 20.0f); // Camera position
     glm::vec3 lookAtPos = glm::vec3(0.0f, 6.5f, 0.0f); // Camera look at (observation point)
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f); // Up direction
-    glm::vec3 lightPos = glm::vec3(5.0f, 5.0f, 5.0f); // Light source position
+    glm::vec3 lightPos = glm::vec3(0.0f, 10.0f, 5.0f); // Light source position
     int direction = 1; // Rotate direction
     float mainBodyAngle = 0.0f; // Rotation angle of the windmill main body
     float bladeAngle = 0.0f; // Rotation angle of the blade
@@ -418,7 +508,7 @@ int main() {
         glUniform3fv(viewPosLoc, 1, glm::value_ptr(cameraPos));
         glUniform3fv(lightPosLoc, 1, glm::value_ptr(lightPos));
 
-        // Draw windmill main body:
+        // === Draw Windmill Main Body ===
         // Main body Part 1 - Tower (Quadrangular Frustum)
         glm::mat4 model = glm::mat4(1.0f);
         // Rotate the tower (tetrahedron) and cube together around the Y-axis
@@ -441,8 +531,9 @@ int main() {
         glUniform3f(objectColorLoc, 0.42f, 0.48f, 0.85f);
         glBindVertexArray(capVAO);
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(capIndices.size()), GL_UNSIGNED_INT, nullptr);
+        // === Draw Windmill Main Body end ===
 
-        // Draw 4 blades
+        // === Draw Blades ===
         glUniform3f(objectColorLoc, 0.35f, 0.3f, 0.85f);
         for (int i = 0; i < 4; ++i) {
             glm::mat4 bladeModel = capModel;
@@ -457,8 +548,29 @@ int main() {
             glBindVertexArray(bladeVAO);
             glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(bladeIndices.size()), GL_UNSIGNED_INT, nullptr);
         }
+        // === Draw Blades end ===
 
-        // Draw Ground
+        // === Draw Hub Cylinder ===
+        glm::mat4 hubModel = glm::mat4(1.0f);
+
+        // Move the hub to the center of the cap's front face
+        hubModel = glm::translate(hubModel, glm::vec3(0.0f, 10.0f, 1.5f));
+
+        // Rotate the hub with the main body around the Y-axis
+        hubModel = glm::rotate(hubModel, glm::radians(mainBodyAngle), glm::vec3(0.0f, 1.0f, 0.0f));
+
+        normalMat = glm::transpose(glm::inverse(glm::mat3(hubModel)));
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(hubModel));
+        glUniformMatrix3fv(normalMatLoc, 1, GL_FALSE, glm::value_ptr(normalMat));
+
+        // Hub cylinder color
+        glUniform3f(objectColorLoc, 0.1f, 0.1f, 0.05f);
+
+        glBindVertexArray(hubVAO);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(hubIndices.size()), GL_UNSIGNED_INT, nullptr);
+        // === Draw Hub Cylinder end ===
+
+        // === Draw Ground ===
         model = glm::mat4(1.0f); // Reset model matrix (Ground is at World Origin)
         normalMat = glm::transpose(glm::inverse(glm::mat3(model)));
 
@@ -470,6 +582,7 @@ int main() {
 
         glBindVertexArray(groundVAO);
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(groundIndices.size()), GL_UNSIGNED_INT, nullptr);
+        // === Draw Ground end ===
 
         glBindVertexArray(0); // Swap buffer display
         glfwSwapBuffers(window);
@@ -488,6 +601,13 @@ int main() {
     glDeleteVertexArrays(1, &groundVAO);
     glDeleteBuffers(1, &groundVBO);
     glDeleteBuffers(1, &groundEBO);
+
+    // -- Add start --
+    // 【新】清理圆柱体资源
+    glDeleteVertexArrays(1, &hubVAO);
+    glDeleteBuffers(1, &hubVBO);
+    glDeleteBuffers(1, &hubEBO);
+    // -- Add end --
 
     glDeleteProgram(program);
 
