@@ -318,9 +318,9 @@ int main() {
     // === Hub Cylinder (in the center of 4 blades) ===
     std::vector<float> hubVertexData;
     std::vector<GLuint> hubIndices;
-    const int segments = 16;
-    const float radius = 0.3f;
-    const float length = 0.5f;
+    constexpr int segments = 16;
+    constexpr float radius = 0.3f;
+    constexpr float length = 0.5f;
 
     // Centers: X=0.0, Y=0.0
     // Front Center (Z = length/2)
@@ -407,7 +407,7 @@ int main() {
     std::cout << "Windmill body rotation speed: + to increase, - to decrease\n";
     std::cout << "Blade rotation speed: I to increase, K to decrease\n";
     std::cout << "R to reverse direction (press once to toggle)\n";
-    std::cout << "P to pause/play windmill main body rotation\n";
+    std::cout << "P to pause/resume windmill main body rotation\n";
     std::cout << "ESC to exit\n";
 
     // Variables (INITIAL)
