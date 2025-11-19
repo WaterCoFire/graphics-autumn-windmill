@@ -279,6 +279,37 @@ int main() {
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
 
+    // Ground (Large Quad Plane)
+    // Position (x, y, z) + Normal (nx, ny, nz)
+    std::vector<float> groundVertexData = {
+        -1000.0f, 0.0f, -1000.0f, 0.0f, 1.0f, 0.0f, // Bottom left
+        1000.0f, 0.0f, -1000.0f, 0.0f, 1.0f, 0.0f, // Bottom right
+        1000.0f, 0.0f, 1000.0f, 0.0f, 1.0f, 0.0f, // Top right
+        -1000.0f, 0.0f, 1000.0f, 0.0f, 1.0f, 0.0f // Top left
+    };
+
+    std::vector<GLuint> groundIndices = {
+        0, 1, 2,
+        0, 2, 3
+    };
+
+    GLuint groundVAO, groundVBO, groundEBO;
+    glGenVertexArrays(1, &groundVAO);
+    glGenBuffers(1, &groundVBO);
+    glGenBuffers(1, &groundEBO);
+    glBindVertexArray(groundVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, groundVBO);
+    glBufferData(GL_ARRAY_BUFFER, groundVertexData.size() * sizeof(float), groundVertexData.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, groundEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, groundIndices.size() * sizeof(GLuint), groundIndices.data(), GL_STATIC_DRAW);
+    // Position Attribute (index 0)
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), static_cast<void *>(nullptr));
+    glEnableVertexAttribArray(0);
+    // Normal Attribute (index 1)
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void *>(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glBindVertexArray(0);
+
     // Display control tip in console
     std::cout << "Controls:\n";
     std::cout << "Camera: W/S/A/D/Q/E to move (forward/back/left/right/down/up)\n";
@@ -388,7 +419,7 @@ int main() {
         glUniform3fv(lightPosLoc, 1, glm::value_ptr(lightPos));
 
         // Draw windmill main body:
-        // Main body - Tower (Quadrangular Frustum)
+        // Main body Part 1 - Tower (Quadrangular Frustum)
         glm::mat4 model = glm::mat4(1.0f);
         // Rotate the tower (tetrahedron) and cube together around the Y-axis
         model = glm::rotate(model, glm::radians(mainBodyAngle), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -400,31 +431,45 @@ int main() {
         glBindVertexArray(towerVAO);
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(towerIndices.size()), GL_UNSIGNED_INT, nullptr);
 
-        // Main body - Cap (Cube)
+        // Main body Part 2 - Cap (Cube)
         glm::mat4 capModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
         capModel = glm::rotate(capModel, glm::radians(mainBodyAngle), glm::vec3(0.0f, 1.0f, 0.0f));
         capModel = glm::scale(capModel, glm::vec3(1.5f, 1.0f, 1.5f));
         normalMat = glm::transpose(glm::inverse(glm::mat3(capModel)));
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(capModel));
         glUniformMatrix3fv(normalMatLoc, 1, GL_FALSE, glm::value_ptr(normalMat));
-        glUniform3f(objectColorLoc, 0.4f, 0.5f, 0.8f);
+        glUniform3f(objectColorLoc, 0.42f, 0.48f, 0.85f);
         glBindVertexArray(capVAO);
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(capIndices.size()), GL_UNSIGNED_INT, nullptr);
 
         // Draw 4 blades
-        glUniform3f(objectColorLoc, 0.3f, 0.3f, 0.8f);
+        glUniform3f(objectColorLoc, 0.35f, 0.3f, 0.85f);
         for (int i = 0; i < 4; ++i) {
             glm::mat4 bladeModel = capModel;
             // Translate to the center of the block's side, leaving a slight gap
             bladeModel = glm::translate(bladeModel, glm::vec3(0.0f, 0.0f, 1.05f));
             // Rotate the blade around the Z-axis
-            bladeModel = glm::rotate(bladeModel, glm::radians(bladeAngle + static_cast<float>(i) * 90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            bladeModel = glm::rotate(bladeModel, glm::radians(bladeAngle + static_cast<float>(i) * 90.0f),
+                                     glm::vec3(0.0f, 0.0f, 1.0f));
             normalMat = glm::transpose(glm::inverse(glm::mat3(bladeModel)));
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(bladeModel));
             glUniformMatrix3fv(normalMatLoc, 1, GL_FALSE, glm::value_ptr(normalMat));
             glBindVertexArray(bladeVAO);
             glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(bladeIndices.size()), GL_UNSIGNED_INT, nullptr);
         }
+
+        // Draw Ground
+        model = glm::mat4(1.0f); // Reset model matrix (Ground is at World Origin)
+        normalMat = glm::transpose(glm::inverse(glm::mat3(model)));
+
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix3fv(normalMatLoc, 1, GL_FALSE, glm::value_ptr(normalMat));
+
+        // Ground color
+        glUniform3f(objectColorLoc, 0.32f, 0.53f, 0.05f);
+
+        glBindVertexArray(groundVAO);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(groundIndices.size()), GL_UNSIGNED_INT, nullptr);
 
         glBindVertexArray(0); // Swap buffer display
         glfwSwapBuffers(window);
@@ -440,6 +485,10 @@ int main() {
     glDeleteVertexArrays(1, &bladeVAO);
     glDeleteBuffers(1, &bladeVBO);
     glDeleteBuffers(1, &bladeEBO);
+    glDeleteVertexArrays(1, &groundVAO);
+    glDeleteBuffers(1, &groundVBO);
+    glDeleteBuffers(1, &groundEBO);
+
     glDeleteProgram(program);
 
     glfwTerminate();

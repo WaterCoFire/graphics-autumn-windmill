@@ -17,7 +17,7 @@ void main() {
     vec3 lightDir = normalize(lightPos - fragPos);
 
     // === Independent ambient light ===
-    vec3 ambient = 0.8 * ambientColor;
+    vec3 ambient = 1.0 * ambientColor;
 
     // === Controllable light - diffuse reflection ===
     float diff = max(dot(norm, lightDir), 0.0);
