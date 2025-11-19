@@ -285,7 +285,7 @@ int main() {
 
     // === Ground (Large Quad Plane) ===
     // Position (x, y, z) + Normal (nx, ny, nz)
-    std::vector<float> groundVertexData = {
+    std::vector groundVertexData = {
         -1000.0f, 0.0f, -1000.0f, 0.0f, 1.0f, 0.0f, // Bottom left
         1000.0f, 0.0f, -1000.0f, 0.0f, 1.0f, 0.0f, // Bottom right
         1000.0f, 0.0f, 1000.0f, 0.0f, 1.0f, 0.0f, // Top right
