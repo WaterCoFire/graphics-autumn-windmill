@@ -16,15 +16,15 @@ void main() {
     vec3 norm = normalize(fragNormal);
     vec3 lightDir = normalize(lightPos - fragPos);
 
-    // === Independent ambient light ===
+    // Independent ambient light
     vec3 ambient = 1.0 * ambientColor;
 
-    // === Controllable light - diffuse reflection ===
+    // Controllable light - diffuse reflection
     float diff = max(dot(norm, lightDir), 0.0);
     // Enhance diffuse reflection effect by multiplying it by 1.2
     vec3 diffuse = 1.2 * diff * lightColor;
 
-    // === Controllable light - specular reflection ===
+    // Controllable light - specular reflection
     vec3 viewDir = normalize(viewPos - fragPos);
     vec3 reflectDir = reflect(-lightDir, norm);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);

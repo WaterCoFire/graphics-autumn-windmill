@@ -90,7 +90,7 @@ int main() {
 #endif
 
     // Create GLFW window
-    GLFWwindow *window = glfwCreateWindow(800, 600, "Windmill Action Scene", nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(800, 600, "Autumn Windmill", nullptr, nullptr);
     if (window == nullptr) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
