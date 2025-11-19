@@ -70,117 +70,6 @@ GLuint loadShader(const char *vertexPath, const char *fragmentPath) {
     return shaderProgram;
 }
 
-// Generate vertices and indices of the cylinder
-void generateCylinder(float radius, float height, int slices, std::vector<float> &vertexData,
-                      std::vector<GLuint> &indices) {
-    vertexData.clear();
-    indices.clear();
-    float thetaStep = 2.0f * 3.141592653589793f / slices; // The angle of each piece
-
-    // Center vertex of the base
-    vertexData.push_back(0.0f);  // x
-    vertexData.push_back(0.0f);  // y
-    vertexData.push_back(0.0f);  // z
-    vertexData.push_back(0.0f);  // Normal vector x
-    vertexData.push_back(-1.0f); // Normal vector y
-    vertexData.push_back(0.0f);  // Normal vector z
-
-    // Vertices around the base
-    for (int i = 0; i < slices; ++i) {
-        float theta = i * thetaStep;
-        float x = radius * std::cos(theta);
-        float z = radius * std::sin(theta);
-        vertexData.push_back(x);
-        vertexData.push_back(0.0f);
-        vertexData.push_back(z);
-        vertexData.push_back(0.0f);
-        vertexData.push_back(-1.0f);
-        vertexData.push_back(0.0f);
-    }
-
-    // Base indices (triangle)
-    for (int i = 0; i < slices; ++i) {
-        indices.push_back(0);
-        indices.push_back(i + 1);
-        indices.push_back((i + 1) % slices + 1);
-    }
-
-    // Index of the central vertex on the top face
-    GLuint topCenterIndex = static_cast<GLuint>(vertexData.size() / 6);
-    vertexData.push_back(0.0f);
-    vertexData.push_back(height);
-    vertexData.push_back(0.0f);
-    vertexData.push_back(0.0f);
-    vertexData.push_back(1.0f);
-    vertexData.push_back(0.0f);
-
-    // Vertices around the top face
-    for (int i = 0; i < slices; ++i) {
-        float theta = i * thetaStep;
-        float x = radius * std::cos(theta);
-        float z = radius * std::sin(theta);
-        vertexData.push_back(x);
-        vertexData.push_back(height);
-        vertexData.push_back(z);
-        vertexData.push_back(0.0f);
-        vertexData.push_back(1.0f);
-        vertexData.push_back(0.0f);
-    }
-
-    // Top face index
-    for (int i = 0; i < slices; ++i) {
-        indices.push_back(topCenterIndex);
-        indices.push_back(topCenterIndex + (i + 1) % slices + 1);
-        indices.push_back(topCenterIndex + i + 1);
-    }
-
-    // Side vertex (lower circle)
-    GLuint sideBottomStart = static_cast<GLuint>(vertexData.size() / 6);
-    for (int i = 0; i < slices; ++i) {
-        float theta = i * thetaStep;
-        float x = radius * std::cos(theta);
-        float z = radius * std::sin(theta);
-        float nx = std::cos(theta);
-        float nz = std::sin(theta);
-        vertexData.push_back(x);
-        vertexData.push_back(0.0f);
-        vertexData.push_back(z);
-        vertexData.push_back(nx);
-        vertexData.push_back(0.0f);
-        vertexData.push_back(nz);
-    }
-
-    // Side vertex (upper circle)
-    GLuint sideTopStart = static_cast<GLuint>(vertexData.size() / 6);
-    for (int i = 0; i < slices; ++i) {
-        float theta = i * thetaStep;
-        float x = radius * std::cos(theta);
-        float z = radius * std::sin(theta);
-        float nx = std::cos(theta);
-        float nz = std::sin(theta);
-        vertexData.push_back(x);
-        vertexData.push_back(height);
-        vertexData.push_back(z);
-        vertexData.push_back(nx);
-        vertexData.push_back(0.0f);
-        vertexData.push_back(nz);
-    }
-
-    // Side indices
-    for (int i = 0; i < slices; ++i) {
-        GLuint bottomLeft = sideBottomStart + i;
-        GLuint bottomRight = sideBottomStart + (i + 1) % slices;
-        GLuint topLeft = sideTopStart + i;
-        GLuint topRight = sideTopStart + (i + 1) % slices;
-        indices.push_back(bottomLeft);
-        indices.push_back(bottomRight);
-        indices.push_back(topRight);
-        indices.push_back(bottomLeft);
-        indices.push_back(topRight);
-        indices.push_back(topLeft);
-    }
-}
-
 int main() {
     // GLFW initialization
     if (!glfwInit())
@@ -232,19 +121,66 @@ int main() {
     GLint shininessLoc = glGetUniformLocation(program, "shininess");
     GLint ambientColorLoc = glGetUniformLocation(program, "ambientColor");
 
-    // Controllable light - Green
-    glUniform3f(lightColorLoc, 0.1f, 1.0f, 0.1f);
+    // Controllable light - Orange
+    glUniform3f(lightColorLoc, 1.0f, 0.5f, 0.1f);
 
-    // Global ambient color - Warm yellow
-    glUniform3f(ambientColorLoc, 0.5f, 0.4f, 0.3f);
+    // Global ambient color
+    glUniform3f(ambientColorLoc, 0.76f, 0.64f, 0.23f);
 
     glUniform1f(shininessLoc, 32.0f);
 
-    // Tower (cylinder)
-    std::vector<float> towerVertexData;
-    std::vector<GLuint> towerIndices;
-    generateCylinder(1.0f, 10.0f, 32, towerVertexData, towerIndices);
+    // Tower (Quadrangular Frustum)
+    // Prism - height 10.0, top face side length 1.0, bottom face side length 2.0
+    std::vector<float> towerVertexData = {
+        // Vertex position (x, y, z) + normal vector (nx, ny, nz)
+        // Bottom (Y = 0.0, Normal 0,-1,0)
+        -2.0f, 0.0f, -2.0f, 0.0f, -1.0f, 0.0f,
+        2.0f, 0.0f, -2.0f, 0.0f, -1.0f, 0.0f,
+        2.0f, 0.0f, 2.0f, 0.0f, -1.0f, 0.0f,
+        -2.0f, 0.0f, 2.0f, 0.0f, -1.0f, 0.0f,
+
+        // Top (Y = 10.0, Normal 0,1,0)
+        -1.0f, 10.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+        1.0f, 10.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+        1.0f, 10.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+        -1.0f, 10.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+
+        // Side Z+ (Normal 0, 0.0995, 0.995)
+        -2.0f, 0.0f, 2.0f, 0.0f, 0.0995f, 0.995f,
+        2.0f, 0.0f, 2.0f, 0.0f, 0.0995f, 0.995f,
+        1.0f, 10.0f, 1.0f, 0.0f, 0.0995f, 0.995f,
+        -1.0f, 10.0f, 1.0f, 0.0f, 0.0995f, 0.995f,
+
+        // Side Z- (Normal 0, 0.0995, -0.995)
+        -2.0f, 0.0f, -2.0f, 0.0f, 0.0995f, -0.995f,
+        2.0f, 0.0f, -2.0f, 0.0f, 0.0995f, -0.995f,
+        1.0f, 10.0f, -1.0f, 0.0f, 0.0995f, -0.995f,
+        -1.0f, 10.0f, -1.0f, 0.0f, 0.0995f, -0.995f,
+
+        // Side X- (Normal -0.995, 0.0995, 0)
+        -2.0f, 0.0f, -2.0f, -0.995f, 0.0995f, 0.0f,
+        -2.0f, 0.0f, 2.0f, -0.995f, 0.0995f, 0.0f,
+        -1.0f, 10.0f, 1.0f, -0.995f, 0.0995f, 0.0f,
+        -1.0f, 10.0f, -1.0f, -0.995f, 0.0995f, 0.0f,
+
+        // Side X+ (Normal 0.995, 0.0995, 0)
+        2.0f, 0.0f, -2.0f, 0.995f, 0.0995f, 0.0f,
+        2.0f, 0.0f, 2.0f, 0.995f, 0.0995f, 0.0f,
+        1.0f, 10.0f, 1.0f, 0.995f, 0.0995f, 0.0f,
+        1.0f, 10.0f, -1.0f, 0.995f, 0.0995f, 0.0f
+    };
+
+    std::vector<GLuint> towerIndices = {
+        0, 1, 2, 0, 2, 3, // Bottom
+        4, 5, 6, 4, 6, 7, // Top
+        8, 9, 10, 8, 10, 11, // Side Z+
+        12, 13, 14, 12, 14, 15, // Side Z-
+        16, 17, 18, 16, 18, 19, // Side X-
+        20, 21, 22, 20, 22, 23 // Side X+
+    };
+
     GLuint towerVAO, towerVBO, towerEBO;
+
     glGenVertexArrays(1, &towerVAO);
     glGenBuffers(1, &towerVBO);
     glGenBuffers(1, &towerEBO);
@@ -437,6 +373,9 @@ int main() {
 
         // Draw tower
         glm::mat4 model = glm::mat4(1.0f);
+        // Rotate the tower (tetrahedron) and cube together around the Y-axis
+        model = glm::rotate(model, glm::radians(capAngle), glm::vec3(0.0f, 1.0f, 0.0f));
+
         glm::mat3 normalMat = glm::transpose(glm::inverse(glm::mat3(model)));
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix3fv(normalMatLoc, 1, GL_FALSE, glm::value_ptr(normalMat));
@@ -451,12 +390,12 @@ int main() {
         normalMat = glm::transpose(glm::inverse(glm::mat3(capModel)));
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(capModel));
         glUniformMatrix3fv(normalMatLoc, 1, GL_FALSE, glm::value_ptr(normalMat));
-        glUniform3f(objectColorLoc, 1.0f, 0.0f, 0.0f);
+        glUniform3f(objectColorLoc, 0.4f, 0.5f, 0.8f);
         glBindVertexArray(capVAO);
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(capIndices.size()), GL_UNSIGNED_INT, nullptr);
 
         // Draw 4 blades
-        glUniform3f(objectColorLoc, 0.0f, 0.0f, 1.0f);
+        glUniform3f(objectColorLoc, 0.3f, 0.3f, 0.8f);
         for (int i = 0; i < 4; ++i) {
             glm::mat4 bladeModel = capModel;
             // Translate to the center of the block's side, leaving a slight gap
