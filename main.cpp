@@ -132,7 +132,7 @@ int main() {
 
     // === Tower (Quadrangular Frustum) ===
     // Prism - height 10.0, top face side length 1.0, bottom face side length 2.0
-    std::vector<float> towerVertexData = {
+    std::vector towerVertexData = {
         // Vertex position (x, y, z) + normal vector (nx, ny, nz)
         // Bottom (Y = 0.0, Normal 0,-1,0)
         -2.0f, 0.0f, -2.0f, 0.0f, -1.0f, 0.0f,
@@ -198,7 +198,7 @@ int main() {
     // === End of Tower ===
 
     // === Cap (cube) ===
-    std::vector<float> capVertexData = {
+    std::vector capVertexData = {
         // Front
         -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
         1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
@@ -256,7 +256,7 @@ int main() {
     // === End of Cap ===
 
     // === Blades (quad) ===
-    std::vector<float> bladeVertexData = {
+    std::vector bladeVertexData = {
         -0.2f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, // Bottom left
         0.2f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, // Bottom right
         0.2f, 3.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Top left
@@ -588,7 +588,7 @@ int main() {
         glfwSwapBuffers(window);
     }
 
-    // Cleanup resources
+    // Cleanup all resources
     glDeleteVertexArrays(1, &towerVAO);
     glDeleteBuffers(1, &towerVBO);
     glDeleteBuffers(1, &towerEBO);
@@ -601,13 +601,9 @@ int main() {
     glDeleteVertexArrays(1, &groundVAO);
     glDeleteBuffers(1, &groundVBO);
     glDeleteBuffers(1, &groundEBO);
-
-    // -- Add start --
-    // 【新】清理圆柱体资源
     glDeleteVertexArrays(1, &hubVAO);
     glDeleteBuffers(1, &hubVBO);
     glDeleteBuffers(1, &hubEBO);
-    // -- Add end --
 
     glDeleteProgram(program);
 
