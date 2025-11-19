@@ -283,29 +283,31 @@ int main() {
     std::cout << "Controls:\n";
     std::cout << "Camera: W/S/A/D/Q/E to move (forward/back/left/right/down/up)\n";
     std::cout << "Light: Arrow keys left/right/up/down for x/y, comma/period for z\n";
-    std::cout << "Cap rotation speed: + to increase, - to decrease\n";
+    std::cout << "Windmill body rotation speed: + to increase, - to decrease\n";
     std::cout << "Blade rotation speed: I to increase, K to decrease\n";
     std::cout << "R to reverse direction (press once to toggle)\n";
+    std::cout << "P to pause/play windmill main body rotation\n";
     std::cout << "ESC to exit\n";
 
     // Variables
     float lastTime = 0.0f; // Last frame time
-    glm::vec3 cameraPos = glm::vec3(0.0f, 5.0f, 20.0f); // Camera position
-    glm::vec3 lookAtPos = glm::vec3(0.0f, 5.0f, 0.0f); // Camera look at (observation point)
+    glm::vec3 cameraPos = glm::vec3(0.0f, 6.5f, 20.0f); // Camera position
+    glm::vec3 lookAtPos = glm::vec3(0.0f, 6.5f, 0.0f); // Camera look at (observation point)
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f); // Up direction
     glm::vec3 lightPos = glm::vec3(5.0f, 5.0f, 5.0f); // Light source position
     int direction = 1; // Rotate direction
-    float capAngle = 0.0f; // Rotation angle of the cap
+    float mainBodyAngle = 0.0f; // Rotation angle of the windmill main body
     float bladeAngle = 0.0f; // Rotation angle of the blade
-    float capRotationSpeed = 10.0f; // Cap rotation speed, degrees/sec
+    float mainBodyRotationSpeed = 10.0f; // Windmill main body rotation speed, degrees/sec
     float bladeRotationSpeed = 60.0f; // Blade rotation speed, degrees/sec
     float moveSpeed = 10.0f; // Camera movement speed
     bool rPressed = false; // R key pressed signal (R key is used for reversing rotation direction)
-
+    bool isBodyRotating = false; // Control variable for windmill main body rotation (by default not rotating)
+    bool pPressed = false; // P key pressed signal (for pausing/resuming windmill body rotation)
 
     // Main loop
     while (!glfwWindowShouldClose(window)) {
-        float currentTime = static_cast<float>(glfwGetTime());
+        auto currentTime = static_cast<float>(glfwGetTime());
         float deltaTime = currentTime - lastTime;
         lastTime = currentTime;
 
@@ -333,10 +335,10 @@ int main() {
         if (glfwGetKey(window, GLFW_KEY_PERIOD) == GLFW_PRESS) lightPos.z += moveSpeed * deltaTime;
 
         // Cap rotation speed
-        if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) capRotationSpeed += 50.0f * deltaTime;
-        if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) capRotationSpeed -= 50.0f * deltaTime;
-        if (capRotationSpeed < 0.0f) capRotationSpeed = 0.0f;
-        if (capRotationSpeed > 500.0f) capRotationSpeed = 500.0f;
+        if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) mainBodyRotationSpeed += 50.0f * deltaTime;
+        if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) mainBodyRotationSpeed -= 50.0f * deltaTime;
+        if (mainBodyRotationSpeed < 0.0f) mainBodyRotationSpeed = 0.0f;
+        if (mainBodyRotationSpeed > 500.0f) mainBodyRotationSpeed = 500.0f;
 
         // Blade rotation speed
         if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) bladeRotationSpeed += 100.0f * deltaTime;
@@ -354,10 +356,24 @@ int main() {
             rPressed = false;
         }
 
+        // Windmill main body rotation pause/resume control
+        if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
+            if (!pPressed) {
+                isBodyRotating = !isBodyRotating; // Toggle rotation state (on/off)
+                pPressed = true;
+            }
+        } else {
+            pPressed = false;
+        }
+
         // Update angles
-        capAngle += direction * capRotationSpeed * deltaTime;
-        bladeAngle += direction * bladeRotationSpeed * deltaTime;
-        capAngle = std::fmod(capAngle, 360.0f);
+        // Windmill main body rotation state can be controlled
+        if (isBodyRotating) {
+            mainBodyAngle += static_cast<float>(direction) * mainBodyRotationSpeed * deltaTime;
+        }
+        bladeAngle += static_cast<float>(direction) * bladeRotationSpeed * deltaTime;
+
+        mainBodyAngle = std::fmod(mainBodyAngle, 360.0f);
         bladeAngle = std::fmod(bladeAngle, 360.0f);
 
         // Rendering
@@ -371,10 +387,11 @@ int main() {
         glUniform3fv(viewPosLoc, 1, glm::value_ptr(cameraPos));
         glUniform3fv(lightPosLoc, 1, glm::value_ptr(lightPos));
 
-        // Draw tower
+        // Draw windmill main body:
+        // Main body - Tower (Quadrangular Frustum)
         glm::mat4 model = glm::mat4(1.0f);
         // Rotate the tower (tetrahedron) and cube together around the Y-axis
-        model = glm::rotate(model, glm::radians(capAngle), glm::vec3(0.0f, 1.0f, 0.0f));
+        model = glm::rotate(model, glm::radians(mainBodyAngle), glm::vec3(0.0f, 1.0f, 0.0f));
 
         glm::mat3 normalMat = glm::transpose(glm::inverse(glm::mat3(model)));
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
@@ -383,9 +400,9 @@ int main() {
         glBindVertexArray(towerVAO);
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(towerIndices.size()), GL_UNSIGNED_INT, nullptr);
 
-        // Draw cap
+        // Main body - Cap (Cube)
         glm::mat4 capModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
-        capModel = glm::rotate(capModel, glm::radians(capAngle), glm::vec3(0.0f, 1.0f, 0.0f));
+        capModel = glm::rotate(capModel, glm::radians(mainBodyAngle), glm::vec3(0.0f, 1.0f, 0.0f));
         capModel = glm::scale(capModel, glm::vec3(1.5f, 1.0f, 1.5f));
         normalMat = glm::transpose(glm::inverse(glm::mat3(capModel)));
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(capModel));
@@ -401,7 +418,7 @@ int main() {
             // Translate to the center of the block's side, leaving a slight gap
             bladeModel = glm::translate(bladeModel, glm::vec3(0.0f, 0.0f, 1.05f));
             // Rotate the blade around the Z-axis
-            bladeModel = glm::rotate(bladeModel, glm::radians(bladeAngle + i * 90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            bladeModel = glm::rotate(bladeModel, glm::radians(bladeAngle + static_cast<float>(i) * 90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
             normalMat = glm::transpose(glm::inverse(glm::mat3(bladeModel)));
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(bladeModel));
             glUniformMatrix3fv(normalMatLoc, 1, GL_FALSE, glm::value_ptr(normalMat));
