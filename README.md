@@ -8,10 +8,10 @@ By Jieshen Cai
 
 ## Controls
 
-- Camera: W/S/A/D/Q/E to move (forward/back/left/right/down/up)
+- Camera: W/S/A/D/Q/E to move (forward/back/left/right/down/up), camera always looks at the windmill
 - Light: Arrow keys left/right/up/down for x/y, comma/period for z
-- Windmill body rotation speed: + to increase, - to decrease
-- Blade rotation speed: I to increase, K to decrease
-- R to reverse direction (press once to toggle)
+- Windmill main body rotation speed: + to increase, - to decrease
+- Blades rotation speed: I to increase, K to decrease
+- R to reverse all rotation directions (main body & blades)
 - P to pause/resume windmill main body rotation
 - ESC to exit
