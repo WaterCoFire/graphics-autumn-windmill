@@ -8,7 +8,7 @@
 #include <sstream>
 #include <vector>
 #include <cmath>
-# include "geometry.h"
+#include "geometry.h"
 
 // Make sure PI value is defined
 #ifndef M_PI
