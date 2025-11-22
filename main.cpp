@@ -10,6 +10,11 @@
 #include <cmath>
 # include "geometry.h"
 
+// Make sure PI value is defined
+#ifndef M_PI
+#define M_PI 3.14159265358979323846f
+#endif
+
 // Function for loading vertex & fragment shaders
 GLuint loadShader(const char *vertexPath, const char *fragmentPath) {
     std::string vertexCode, fragmentCode;
@@ -202,7 +207,7 @@ int main() {
     glBindVertexArray(0);
     // === End of Ground ==
 
-    // === Hub Cylinder (in the center of 4 blades) ===
+    // === Hub (Cylinder, in the center of 4 blades) ===
     std::vector<float> hubVertexData;
     std::vector<GLuint> hubIndices;
     constexpr int segments = 16;
@@ -285,7 +290,73 @@ int main() {
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void *>(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
-    // === End of Hub Cylinder ===
+    // === End of Hub ===
+
+    // === Grasses (Cone) ===
+    std::vector<float> grassConeVertices;
+    std::vector<GLuint> grassConeIndices;
+    constexpr int grassSegments = 8;
+    constexpr float grassRadius = 0.1f;
+    constexpr float grassHeight = 0.8f;
+
+    // Calculate the side normal (the normal must also be tilted upward)
+    float normY = grassRadius / std::sqrt(grassHeight * grassHeight + grassRadius * grassRadius);
+    float normXZ = grassHeight / std::sqrt(grassHeight * grassHeight + grassRadius * grassRadius);
+
+    // Bottom center point (normal pointing down)
+    grassConeVertices.insert(grassConeVertices.end(), {0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f}); // Index 0
+
+    // Top tip (normal pointing upward)
+    grassConeVertices.insert(grassConeVertices.end(), {0.0f, grassHeight, 0.0f, 0.0f, 1.0f, 0.0f}); // Index 1
+
+    // Base edge (used to draw the base)
+    for (int i = 0; i < grassSegments; ++i) {
+        float angle = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(grassSegments);
+        float x = grassRadius * std::cos(angle);
+        float z = grassRadius * std::sin(angle);
+        grassConeVertices.insert(grassConeVertices.end(), {x, 0.0f, z, 0.0f, -1.0f, 0.0f});
+    }
+
+    //  Side Vertex (Used for drawing the side, where the normal is tilted)
+    for (int i = 0; i < grassSegments; ++i) {
+        float angle = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(grassSegments);
+        float x = grassRadius * std::cos(angle);
+        float z = grassRadius * std::sin(angle);
+        float nx = normXZ * std::cos(angle);
+        float nz = normXZ * std::sin(angle);
+        grassConeVertices.insert(grassConeVertices.end(), {x, 0.0f, z, nx, normY, nz});
+    }
+
+    // Indices
+    for (int i = 0; i < grassSegments; ++i) {
+        GLuint j = (i + 1) % grassSegments;
+
+        // Base indices (using 0 and 2-9)
+        GLuint base_i = 2 + i;
+        GLuint base_j = 2 + j;
+        grassConeIndices.insert(grassConeIndices.end(), {0, base_j, base_i});
+
+        // Side indices (using 1 and 10-17)
+        GLuint side_i = 2 + grassSegments + i;
+        GLuint side_j = 2 + grassSegments + j;
+        grassConeIndices.insert(grassConeIndices.end(), {1, side_i, side_j});
+    }
+
+    GLuint grassVAO, grassVBO, grassEBO;
+    glGenVertexArrays(1, &grassVAO);
+    glGenBuffers(1, &grassVBO);
+    glGenBuffers(1, &grassEBO);
+    glBindVertexArray(grassVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, grassVBO);
+    glBufferData(GL_ARRAY_BUFFER, grassConeVertices.size() * sizeof(float), grassConeVertices.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, grassEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, grassConeIndices.size() * sizeof(GLuint), grassConeIndices.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), static_cast<void *>(nullptr));
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void *>(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glBindVertexArray(0);
+    // === End of Grasses ===
 
     // Display control tip in console
     std::cout << "Controls:\n";
@@ -437,7 +508,7 @@ int main() {
         }
         // === Draw Blades end ===
 
-        // === Draw Hub Cylinder ===
+        // === Draw Hub ===
         glm::mat4 hubModel = baseTransform;
         hubModel = glm::translate(hubModel, glm::vec3(0.0f, 0.0f, 1.5f));
 
@@ -450,7 +521,7 @@ int main() {
 
         glBindVertexArray(hubVAO);
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(hubIndices.size()), GL_UNSIGNED_INT, nullptr);
-        // === Draw Hub Cylinder end ===
+        // === Draw Hub end ===
 
         // === Draw Ground ===
         model = glm::mat4(1.0f); // Reset model matrix (Ground is at World Origin)
@@ -465,6 +536,25 @@ int main() {
         glBindVertexArray(groundVAO);
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(Geometry::groundIndices.size()), GL_UNSIGNED_INT, nullptr);
         // === Draw Ground end ===
+
+        // === Draw Grasses ===
+        // Grass color
+        glUniform3f(objectColorLoc, 0.4f, 0.6f, 0.1f);
+        glBindVertexArray(grassVAO);
+
+        // Draw grasses in the following defined area
+        for (int i = -100; i < 100; i += 2) {
+            for (int j = -100; j < 100; j += 2) {
+                glm::vec3 pos(i, 0.0f, j);
+                model = glm::translate(glm::mat4(1.0f), pos);
+                normalMat = glm::transpose(glm::inverse(glm::mat3(model)));
+                glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+                glUniformMatrix3fv(normalMatLoc, 1, GL_FALSE, glm::value_ptr(normalMat));
+
+                glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(grassConeIndices.size()), GL_UNSIGNED_INT, nullptr);
+            }
+        }
+        // === End of Draw Grasses ===
 
         glBindVertexArray(0); // Swap buffer display
         glfwSwapBuffers(window);
