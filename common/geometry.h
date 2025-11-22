@@ -128,9 +128,6 @@ namespace Geometry {
         0, 1, 2,
         0, 2, 3
     };
-
-
-
 }
 
 #endif //GRAPHICS_ACTION_SCENE_GEOMETRY_H

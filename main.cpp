@@ -379,13 +379,14 @@ int main() {
     float bladeAngle = 0.0f; // Rotation angle of the blade
     float mainBodyRotationSpeed = 10.0f; // Windmill main body rotation speed, degrees/sec
     float bladeRotationSpeed = 60.0f; // Blade rotation speed, degrees/sec
-    float moveSpeed = 10.0f; // Camera movement speed
     bool rPressed = false; // R key pressed signal (R key is used for reversing rotation direction)
     bool isBodyRotating = false; // Control variable for windmill main body rotation (by default not rotating)
     bool pPressed = false; // P key pressed signal (for pausing/resuming windmill body rotation)
 
     // Main loop
+    // User control handling below
     while (!glfwWindowShouldClose(window)) {
+        float moveSpeed = 10.0f; // Camera movement speed
         auto currentTime = static_cast<float>(glfwGetTime());
         float deltaTime = currentTime - lastTime;
         lastTime = currentTime;
@@ -554,7 +555,7 @@ int main() {
                 glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(grassConeIndices.size()), GL_UNSIGNED_INT, nullptr);
             }
         }
-        // === End of Draw Grasses ===
+        // === Draw Grasses end ===
 
         glBindVertexArray(0); // Swap buffer display
         glfwSwapBuffers(window);
