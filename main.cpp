@@ -8,6 +8,7 @@
 #include <sstream>
 #include <vector>
 #include <cmath>
+# include "geometry.h"
 
 // Function for loading vertex & fragment shaders
 GLuint loadShader(const char *vertexPath, const char *fragmentPath) {
@@ -131,55 +132,6 @@ int main() {
     glUniform1f(shininessLoc, 32.0f);
 
     // === Tower (Quadrangular Frustum) ===
-    // Prism - height 10.0, top face side length 1.0, bottom face side length 2.0
-    std::vector towerVertexData = {
-        // Vertex position (x, y, z) + normal vector (nx, ny, nz)
-        // Bottom (Y = 0.0, Normal 0,-1,0)
-        -2.0f, 0.0f, -2.0f, 0.0f, -1.0f, 0.0f,
-        2.0f, 0.0f, -2.0f, 0.0f, -1.0f, 0.0f,
-        2.0f, 0.0f, 2.0f, 0.0f, -1.0f, 0.0f,
-        -2.0f, 0.0f, 2.0f, 0.0f, -1.0f, 0.0f,
-
-        // Top (Y = 10.0, Normal 0,1,0)
-        -1.0f, 10.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-        1.0f, 10.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-        1.0f, 10.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-        -1.0f, 10.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-
-        // Side Z+ (Normal 0, 0.0995, 0.995)
-        -2.0f, 0.0f, 2.0f, 0.0f, 0.0995f, 0.995f,
-        2.0f, 0.0f, 2.0f, 0.0f, 0.0995f, 0.995f,
-        1.0f, 10.0f, 1.0f, 0.0f, 0.0995f, 0.995f,
-        -1.0f, 10.0f, 1.0f, 0.0f, 0.0995f, 0.995f,
-
-        // Side Z- (Normal 0, 0.0995, -0.995)
-        -2.0f, 0.0f, -2.0f, 0.0f, 0.0995f, -0.995f,
-        2.0f, 0.0f, -2.0f, 0.0f, 0.0995f, -0.995f,
-        1.0f, 10.0f, -1.0f, 0.0f, 0.0995f, -0.995f,
-        -1.0f, 10.0f, -1.0f, 0.0f, 0.0995f, -0.995f,
-
-        // Side X- (Normal -0.995, 0.0995, 0)
-        -2.0f, 0.0f, -2.0f, -0.995f, 0.0995f, 0.0f,
-        -2.0f, 0.0f, 2.0f, -0.995f, 0.0995f, 0.0f,
-        -1.0f, 10.0f, 1.0f, -0.995f, 0.0995f, 0.0f,
-        -1.0f, 10.0f, -1.0f, -0.995f, 0.0995f, 0.0f,
-
-        // Side X+ (Normal 0.995, 0.0995, 0)
-        2.0f, 0.0f, -2.0f, 0.995f, 0.0995f, 0.0f,
-        2.0f, 0.0f, 2.0f, 0.995f, 0.0995f, 0.0f,
-        1.0f, 10.0f, 1.0f, 0.995f, 0.0995f, 0.0f,
-        1.0f, 10.0f, -1.0f, 0.995f, 0.0995f, 0.0f
-    };
-
-    std::vector<GLuint> towerIndices = {
-        0, 1, 2, 0, 2, 3, // Bottom
-        4, 5, 6, 4, 6, 7, // Top
-        8, 9, 10, 8, 10, 11, // Side Z+
-        12, 13, 14, 12, 14, 15, // Side Z-
-        16, 17, 18, 16, 18, 19, // Side X-
-        20, 21, 22, 20, 22, 23 // Side X+
-    };
-
     GLuint towerVAO, towerVBO, towerEBO;
 
     glGenVertexArrays(1, &towerVAO);
@@ -187,9 +139,9 @@ int main() {
     glGenBuffers(1, &towerEBO);
     glBindVertexArray(towerVAO);
     glBindBuffer(GL_ARRAY_BUFFER, towerVBO);
-    glBufferData(GL_ARRAY_BUFFER, towerVertexData.size() * sizeof(float), towerVertexData.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, Geometry::towerVertices.size() * sizeof(float), Geometry::towerVertices.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, towerEBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, towerIndices.size() * sizeof(GLuint), towerIndices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, Geometry::towerIndices.size() * sizeof(GLuint), Geometry::towerIndices.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), static_cast<void *>(nullptr));
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void *>(3 * sizeof(float)));
@@ -197,57 +149,16 @@ int main() {
     glBindVertexArray(0);
     // === End of Tower ===
 
-    // === Cap (cube) ===
-    std::vector capVertexData = {
-        // Front
-        -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-        1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-        1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-        -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-        // Back
-        -1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f,
-        1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f,
-        1.0f, 1.0f, -1.0f, 0.0f, 0.0f, -1.0f,
-        -1.0f, 1.0f, -1.0f, 0.0f, 0.0f, -1.0f,
-        // Left
-        -1.0f, -1.0f, -1.0f, -1.0f, 0.0f, 0.0f,
-        -1.0f, -1.0f, 1.0f, -1.0f, 0.0f, 0.0f,
-        -1.0f, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f,
-        -1.0f, 1.0f, -1.0f, -1.0f, 0.0f, 0.0f,
-        // Right
-        1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f,
-        1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-        1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-        1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 0.0f,
-        // Bottom
-        -1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f,
-        1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f,
-        1.0f, -1.0f, 1.0f, 0.0f, -1.0f, 0.0f,
-        -1.0f, -1.0f, 1.0f, 0.0f, -1.0f, 0.0f,
-        // Top
-        -1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-        1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-        1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-        -1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f
-    };
-    std::vector<GLuint> capIndices = {
-        0, 1, 2, 0, 2, 3,
-        4, 5, 6, 4, 6, 7,
-        8, 9, 10, 8, 10, 11,
-        12, 13, 14, 12, 14, 15,
-        16, 17, 18, 16, 18, 19,
-        20, 21, 22, 20, 22, 23
-    };
-
+    // === Cap (Cube) ===
     GLuint capVAO, capVBO, capEBO;
     glGenVertexArrays(1, &capVAO);
     glGenBuffers(1, &capVBO);
     glGenBuffers(1, &capEBO);
     glBindVertexArray(capVAO);
     glBindBuffer(GL_ARRAY_BUFFER, capVBO);
-    glBufferData(GL_ARRAY_BUFFER, capVertexData.size() * sizeof(float), capVertexData.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, Geometry::capVertices.size() * sizeof(float), Geometry::capVertices.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, capEBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, capIndices.size() * sizeof(GLuint), capIndices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, Geometry::capIndices.size() * sizeof(GLuint), Geometry::capIndices.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), static_cast<void *>(nullptr));
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void *>(3 * sizeof(float)));
@@ -255,27 +166,16 @@ int main() {
     glBindVertexArray(0);
     // === End of Cap ===
 
-    // === Blades (quad) ===
-    std::vector bladeVertexData = {
-        -0.2f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, // Bottom left
-        0.2f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, // Bottom right
-        0.2f, 3.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Top left
-        -0.2f, 3.5f, 0.0f, 0.0f, 0.0f, 1.0f // Top right
-    };
-
-    std::vector<GLuint> bladeIndices = {
-        0, 1, 2, 0, 2, 3
-    };
-
+    // === Blades (Quad) ===
     GLuint bladeVAO, bladeVBO, bladeEBO;
     glGenVertexArrays(1, &bladeVAO);
     glGenBuffers(1, &bladeVBO);
     glGenBuffers(1, &bladeEBO);
     glBindVertexArray(bladeVAO);
     glBindBuffer(GL_ARRAY_BUFFER, bladeVBO);
-    glBufferData(GL_ARRAY_BUFFER, bladeVertexData.size() * sizeof(float), bladeVertexData.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, Geometry::bladeVertices.size() * sizeof(float), Geometry::bladeVertices.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bladeEBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, bladeIndices.size() * sizeof(GLuint), bladeIndices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, Geometry::bladeIndices.size() * sizeof(GLuint), Geometry::bladeIndices.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), static_cast<void *>(nullptr));
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void *>(3 * sizeof(float)));
@@ -284,28 +184,15 @@ int main() {
     // === End of Blade ===
 
     // === Ground (Large Quad Plane) ===
-    // Position (x, y, z) + Normal (nx, ny, nz)
-    std::vector groundVertexData = {
-        -1000.0f, 0.0f, -1000.0f, 0.0f, 1.0f, 0.0f, // Bottom left
-        1000.0f, 0.0f, -1000.0f, 0.0f, 1.0f, 0.0f, // Bottom right
-        1000.0f, 0.0f, 1000.0f, 0.0f, 1.0f, 0.0f, // Top right
-        -1000.0f, 0.0f, 1000.0f, 0.0f, 1.0f, 0.0f // Top left
-    };
-
-    std::vector<GLuint> groundIndices = {
-        0, 1, 2,
-        0, 2, 3
-    };
-
     GLuint groundVAO, groundVBO, groundEBO;
     glGenVertexArrays(1, &groundVAO);
     glGenBuffers(1, &groundVBO);
     glGenBuffers(1, &groundEBO);
     glBindVertexArray(groundVAO);
     glBindBuffer(GL_ARRAY_BUFFER, groundVBO);
-    glBufferData(GL_ARRAY_BUFFER, groundVertexData.size() * sizeof(float), groundVertexData.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, Geometry::groundVertices.size() * sizeof(float), Geometry::groundVertices.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, groundEBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, groundIndices.size() * sizeof(GLuint), groundIndices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, Geometry::groundIndices.size() * sizeof(GLuint), Geometry::groundIndices.data(), GL_STATIC_DRAW);
     // Position Attribute (index 0)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), static_cast<void *>(nullptr));
     glEnableVertexAttribArray(0);
@@ -519,7 +406,7 @@ int main() {
         glUniformMatrix3fv(normalMatLoc, 1, GL_FALSE, glm::value_ptr(normalMat));
         glUniform3f(objectColorLoc, 0.5f, 0.5f, 0.5f);
         glBindVertexArray(towerVAO);
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(towerIndices.size()), GL_UNSIGNED_INT, nullptr);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(Geometry::towerIndices.size()), GL_UNSIGNED_INT, nullptr);
 
         // Main body Part 2 - Cap (Cube)
         // T_center * R_body
@@ -530,7 +417,7 @@ int main() {
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(capModel));
         glUniform3f(objectColorLoc, 0.42f, 0.48f, 0.85f);
         glBindVertexArray(capVAO);
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(capIndices.size()), GL_UNSIGNED_INT, nullptr);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(Geometry::capIndices.size()), GL_UNSIGNED_INT, nullptr);
         // === Draw Windmill Main Body end ===
 
         // === Draw Blades ===
@@ -546,7 +433,7 @@ int main() {
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(bladeModel));
             glUniformMatrix3fv(normalMatLoc, 1, GL_FALSE, glm::value_ptr(normalMat));
             glBindVertexArray(bladeVAO);
-            glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(bladeIndices.size()), GL_UNSIGNED_INT, nullptr);
+            glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(Geometry::bladeIndices.size()), GL_UNSIGNED_INT, nullptr);
         }
         // === Draw Blades end ===
 
@@ -576,7 +463,7 @@ int main() {
         glUniform3f(objectColorLoc, 0.32f, 0.53f, 0.05f);
 
         glBindVertexArray(groundVAO);
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(groundIndices.size()), GL_UNSIGNED_INT, nullptr);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(Geometry::groundIndices.size()), GL_UNSIGNED_INT, nullptr);
         // === Draw Ground end ===
 
         glBindVertexArray(0); // Swap buffer display
