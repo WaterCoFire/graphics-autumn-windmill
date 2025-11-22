@@ -522,12 +522,12 @@ int main() {
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(towerIndices.size()), GL_UNSIGNED_INT, nullptr);
 
         // Main body Part 2 - Cap (Cube)
-        glm::mat4 capModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
-        capModel = glm::rotate(capModel, glm::radians(mainBodyAngle), glm::vec3(0.0f, 1.0f, 0.0f));
-        capModel = glm::scale(capModel, glm::vec3(1.5f, 1.0f, 1.5f));
-        normalMat = glm::transpose(glm::inverse(glm::mat3(capModel)));
+        // T_center * R_body
+        glm::mat4 baseTransform = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
+        baseTransform = glm::rotate(baseTransform, glm::radians(mainBodyAngle), glm::vec3(0.0f, 1.0f, 0.0f));
+        // T_center * R_body * S_cap
+        glm::mat4 capModel = glm::scale(baseTransform, glm::vec3(1.5f, 1.0f, 1.5f));
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(capModel));
-        glUniformMatrix3fv(normalMatLoc, 1, GL_FALSE, glm::value_ptr(normalMat));
         glUniform3f(objectColorLoc, 0.42f, 0.48f, 0.85f);
         glBindVertexArray(capVAO);
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(capIndices.size()), GL_UNSIGNED_INT, nullptr);
@@ -551,13 +551,8 @@ int main() {
         // === Draw Blades end ===
 
         // === Draw Hub Cylinder ===
-        glm::mat4 hubModel = glm::mat4(1.0f);
-
-        // Move the hub to the center of the cap's front face
-        hubModel = glm::translate(hubModel, glm::vec3(0.0f, 10.0f, 1.5f));
-
-        // Rotate the hub with the main body around the Y-axis
-        hubModel = glm::rotate(hubModel, glm::radians(mainBodyAngle), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 hubModel = baseTransform;
+        hubModel = glm::translate(hubModel, glm::vec3(0.0f, 0.0f, 1.5f));
 
         normalMat = glm::transpose(glm::inverse(glm::mat3(hubModel)));
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(hubModel));
