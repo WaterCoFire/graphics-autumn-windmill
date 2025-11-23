@@ -362,10 +362,10 @@ int main() {
     std::cout << "Controls:\n";
     std::cout << "Camera: W/S/A/D/Q/E to move (forward/back/left/right/down/up), camera always looks at the windmill\n";
     std::cout << "Light: Arrow keys left/right/up/down for x/y, comma/period for z\n";
-    std::cout << "Windmill main body rotation speed: + to increase, - to decrease\n";
     std::cout << "Blades rotation speed: I to increase, K to decrease\n";
-    std::cout << "R to reverse all rotation directions (main body & blades)\n";
     std::cout << "P to pause/resume windmill main body rotation\n";
+    std::cout << "Windmill main body rotation speed: + to increase, - to decrease\n";
+    std::cout << "R to reverse all rotation directions (main body & blades)\n";
     std::cout << "ESC to exit\n";
 
     // Variables (INITIAL)

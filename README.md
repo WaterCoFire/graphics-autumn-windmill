@@ -6,12 +6,14 @@ A lovely Autumn Windmill implemented in OpenGL.
 
 By Jieshen Cai
 
+![AutumnWindmill.png](AutumnWindmill.png)
+
 ## Controls
 
 - Camera: W/S/A/D/Q/E to move (forward/back/left/right/down/up), camera always looks at the windmill
 - Light: Arrow keys left/right/up/down for x/y, comma/period for z
-- Windmill main body rotation speed: + to increase, - to decrease
 - Blades rotation speed: I to increase, K to decrease
-- R to reverse all rotation directions (main body & blades)
 - P to pause/resume windmill main body rotation
+- Windmill main body rotation speed: + to increase, - to decrease
+- R to reverse all rotation directions (main body & blades)
 - ESC to exit
