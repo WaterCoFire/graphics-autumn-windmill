@@ -1,8 +1,8 @@
-# graphics-action-scene
+# graphics-action-scene: Autumn Windmill
 
 **Personal Repo of DI41008 - Graphics Assignment 1: Action Scene**
 
-A lovely Autumn Windmill implemented in OpenGL.
+A lovely Autumn Windmill implemented in OpenGL. I don't claim this is an A-grade submission!!! As it genuinely lacks creativity (and I'm clearly NOT a graphics expert). For reference only.
 
 By Jieshen Cai
 
