@@ -3,6 +3,9 @@ project(graphics_action_scene)
 
 set(CMAKE_CXX_STANDARD 17)
 
+# Static link libgcc and libstdc++ to avoid DLL dependencies
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++ -static")
+
 # Public include directories
 include_directories(common include include/glad include/GLFW include/glm include/KNR)
 
