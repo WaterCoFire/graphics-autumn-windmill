@@ -3,15 +3,14 @@ project(graphics_action_scene)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# Static link libgcc and libstdc++ to avoid DLL dependencies
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++ -static")
-
 # Public include directories
 include_directories(common include include/glad include/GLFW include/glm include/KNR)
 
 # Detect OS
 if (WIN32)
     message(STATUS ">>> Building on Windows <<<")
+    # Static link libgcc and libstdc++ to avoid DLL dependencies
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++ -static")
     # glfw-3.4.bin.WIN64 is in D:\. Change accordingly if any changes take place.
     set(GLFW_DIR "D:/glfw-3.4.bin.WIN64")
     include_directories(${GLFW_DIR}/include)
