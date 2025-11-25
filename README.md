@@ -4,6 +4,8 @@
 
 A lovely Autumn Windmill implemented in OpenGL. I don't claim this is an A-grade submission!!! As it genuinely lacks creativity (and I'm clearly NOT a graphics expert). For reference only.
 
+**NOTE: This project is compatible with both Windows 11 and macOS (Apple Silicon), but it is recommended to run it on a Mac (with Apple Silicon).**
+
 By Jieshen Cai
 
 ![AutumnWindmill.png](AutumnWindmill.png)

@@ -10,6 +10,11 @@
 #include <cmath>
 #include "geometry.h"
 
+/*
+ * IMPORTANT!
+ * It is recommended to run this project on Mac (with Apple Silicon).
+ * */
+
 // Make sure PI value is defined
 #ifndef M_PI
 #define M_PI 3.14159265358979323846f
