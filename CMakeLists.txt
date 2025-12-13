@@ -26,17 +26,39 @@ endif ()
 # Find OpenGL
 find_package(OpenGL REQUIRED)
 
+# --- Assimp ---
+# Use FetchContent to download and build Assimp automatically
+include(FetchContent)
+FetchContent_Declare(
+        assimp
+        GIT_REPOSITORY https://github.com/assimp/assimp.git
+        GIT_TAG v5.2.5 # Using a stable version
+)
+# We don't need to build Assimp's tests or install it globally
+set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(assimp)
+
+# On macOS with modern compilers, Assimp can trigger deprecated-declarations warnings
+# Since these are treated as errors, we suppress this specific warning for the assimp target only
+if(APPLE)
+    target_compile_options(assimp PRIVATE "-Wno-deprecated-declarations")
+endif()
+# --- End Assimp ---
+
 # General GLAD/GLFW wrapper
 # This way, COMMON_SRC = ["common/glad.c", "common/wrapper_glfw.cpp", "common/wrapper_glfw.h"
 set(COMMON_SRC
         common/glad.c
         common/wrapper_glfw.cpp
         common/wrapper_glfw.h
+        common/Model.cpp
 )
 
 # === executable ===
 add_executable(graphics_action_scene ${COMMON_SRC} main.cpp)
-target_link_libraries(graphics_action_scene PRIVATE ${OPENGL_LIBRARIES} glfw3)
+# Link Assimp to our executable
+target_link_libraries(graphics_action_scene PRIVATE ${OPENGL_LIBRARIES} glfw3 assimp)
 
 # Extra libraries based on different OS
 if (APPLE)
@@ -56,9 +78,14 @@ elseif (WIN32)
     #    )
 endif ()
 
-# Copy shader files to the build directory (cmake-build-debug)
+# Copy assets to the build directory (cmake-build-debug)
 file(COPY
         shader.vert
         shader.frag
+        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+file(COPY
+        objects
         DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
 )
