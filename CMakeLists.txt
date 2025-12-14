@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(graphics_action_scene)
+project(graphics_autumn_windmill)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -56,13 +56,13 @@ set(COMMON_SRC
 )
 
 # === executable ===
-add_executable(graphics_action_scene ${COMMON_SRC} main.cpp)
+add_executable(graphics_autumn_windmill ${COMMON_SRC} main.cpp)
 # Link Assimp to our executable
-target_link_libraries(graphics_action_scene PRIVATE ${OPENGL_LIBRARIES} glfw3 assimp)
+target_link_libraries(graphics_autumn_windmill PRIVATE ${OPENGL_LIBRARIES} glfw3 assimp)
 
 # Extra libraries based on different OS
 if (APPLE)
-    target_link_libraries(graphics_action_scene
+    target_link_libraries(graphics_autumn_windmill
             PRIVATE
             "-framework Cocoa"
             "-framework IOKit"
