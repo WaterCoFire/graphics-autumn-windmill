@@ -228,7 +228,7 @@ int main() {
     glUniform1f(shininessLoc, 32.0f);
 
     // === Load Models ===
-    // Load the ground plane using Model class
+    // Load models using Model class
     Model groundModel("objects/plane.obj");
 
     // === Tower (Quadrangular Frustum) ===
@@ -244,10 +244,21 @@ int main() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, towerEBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, Geometry::towerIndices.size() * sizeof(GLuint), Geometry::towerIndices.data(),
                  GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), static_cast<void *>(nullptr));
+
+    // Vertex positions
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), static_cast<void *>(nullptr));
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void *>(3 * sizeof(float)));
+
+    // Vertex normals
+    // Offset for normals: 3 * sizeof(float)
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void *>(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+
+    // Texture coordinates
+    // Offset for texture coords: 6 * sizeof(float)
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void *>(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
     glBindVertexArray(0);
     // === End of Tower ===
 
@@ -416,6 +427,7 @@ int main() {
 
     // === Load Textures ===
     unsigned int groundTexture = loadTexture("textures/Grass004_1K-JPG/Grass004_1K-JPG_Color.jpg");
+    unsigned int brickTexture = loadTexture("textures/Bricks099_1K-JPG/Bricks099_1K-JPG_Color.jpg");
 
     // === Texture Uniforms ===
     glUseProgram(program);
@@ -556,11 +568,8 @@ int main() {
         // === Draw Skybox end ===
 
         // === Draw Windmill Main Body ===
-
-        // Use color, not texture
-        glUniform1i(useTextureLoc, 0);
-
         // Main body Part 1 - Tower (Quadrangular Frustum)
+
         glm::mat4 model = glm::mat4(1.0f);
         // Rotate the tower (tetrahedron) and cube together around the Y-axis
         model = glm::rotate(model, glm::radians(mainBodyAngle), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -569,10 +578,19 @@ int main() {
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix3fv(normalMatLoc, 1, GL_FALSE, glm::value_ptr(normalMat));
         glUniform3f(objectColorLoc, 0.5f, 0.5f, 0.5f);
+
+        glUniform1i(useTextureLoc, 1); // Use texture
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, brickTexture);
+
         glBindVertexArray(towerVAO);
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(Geometry::towerIndices.size()), GL_UNSIGNED_INT, nullptr);
 
         // Main body Part 2 - Cap (Cube)
+
+        // Use color, not texture
+        glUniform1i(useTextureLoc, 0);
+
         // T_center * R_body
         glm::mat4 baseTransform = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
         baseTransform = glm::rotate(baseTransform, glm::radians(mainBodyAngle), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -659,6 +677,7 @@ int main() {
     glDeleteBuffers(1, &skyboxVBO);
 
     glDeleteTextures(1, &groundTexture);
+    glDeleteTextures(1, &brickTexture);
 
     glDeleteProgram(program);
     glDeleteProgram(skyboxProgram);
