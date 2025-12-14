@@ -274,10 +274,21 @@ int main() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, capEBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, Geometry::capIndices.size() * sizeof(GLuint), Geometry::capIndices.data(),
                  GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), static_cast<void *>(nullptr));
+
+    // Vertex positions
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), static_cast<void *>(nullptr));
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void *>(3 * sizeof(float)));
+
+    // Vertex normals
+    // Offset for normals: 3 * sizeof(float)
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void *>(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+
+    // Texture coordinates
+    // Offset for texture coords: 6 * sizeof(float)
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void *>(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
     glBindVertexArray(0);
     // === End of Cap ===
 
@@ -427,7 +438,8 @@ int main() {
 
     // === Load Textures ===
     unsigned int groundTexture = loadTexture("textures/Grass004_1K-JPG/Grass004_1K-JPG_Color.jpg");
-    unsigned int brickTexture = loadTexture("textures/Bricks099_1K-JPG/Bricks099_1K-JPG_Color.jpg");
+    unsigned int towerTexture = loadTexture("textures/Bricks099_1K-JPG/Bricks099_1K-JPG_Color.jpg");
+    unsigned int capTexture = loadTexture("textures/Bricks094_1K-JPG/Bricks094_1K-JPG_Color.jpg");
 
     // === Texture Uniforms ===
     glUseProgram(program);
@@ -581,15 +593,12 @@ int main() {
 
         glUniform1i(useTextureLoc, 1); // Use texture
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, brickTexture);
+        glBindTexture(GL_TEXTURE_2D, towerTexture);
 
         glBindVertexArray(towerVAO);
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(Geometry::towerIndices.size()), GL_UNSIGNED_INT, nullptr);
 
         // Main body Part 2 - Cap (Cube)
-
-        // Use color, not texture
-        glUniform1i(useTextureLoc, 0);
 
         // T_center * R_body
         glm::mat4 baseTransform = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
@@ -598,11 +607,19 @@ int main() {
         glm::mat4 capModel = glm::scale(baseTransform, glm::vec3(1.5f, 1.0f, 1.5f));
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(capModel));
         glUniform3f(objectColorLoc, 0.42f, 0.48f, 0.85f);
+
+        glUniform1i(useTextureLoc, 1); // Use texture
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, capTexture);
+
         glBindVertexArray(capVAO);
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(Geometry::capIndices.size()), GL_UNSIGNED_INT, nullptr);
         // === Draw Windmill Main Body end ===
 
         // === Draw Blades ===
+        // Use color, not texture
+        glUniform1i(useTextureLoc, 0);
+
         glUniform3f(objectColorLoc, 0.35f, 0.3f, 0.85f);
         for (int i = 0; i < 4; ++i) {
             glm::mat4 bladeModel = capModel;
@@ -677,7 +694,8 @@ int main() {
     glDeleteBuffers(1, &skyboxVBO);
 
     glDeleteTextures(1, &groundTexture);
-    glDeleteTextures(1, &brickTexture);
+    glDeleteTextures(1, &towerTexture);
+    glDeleteTextures(1, &capTexture);
 
     glDeleteProgram(program);
     glDeleteProgram(skyboxProgram);
