@@ -1,4 +1,4 @@
-#include "Model.h"
+#include "model.h"
 
 // Loads a model from file and populates the meshes vector.
 void Model::loadModel(std::string const &path) {
