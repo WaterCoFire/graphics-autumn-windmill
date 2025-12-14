@@ -2,7 +2,7 @@
 
 in vec3 fragNormal;
 in vec3 fragPos;
-in vec2 TexxCoords;
+in vec2 TexCoords;
 
 out vec4 color;
 
@@ -10,13 +10,18 @@ uniform vec3 lightPos; // Controllable light
 uniform vec3 viewPos;
 uniform vec3 lightColor;
 uniform vec3 ambientColor;
-//uniform vec3 objectColor;
+uniform vec3 objectColor;
+uniform bool useTexture; // Use texture color or object color
 uniform float shininess;
+
 uniform sampler2D texture_diffuse1;
 
 void main() {
-    // Sample the texture color
-    vec3 texColor = texture(texture_diffuse1, TexxCoords).rgb;
+    vec3 baseColor;
+    if(useTexture)
+        baseColor = texture(texture_diffuse1, TexCoords).rgb; // Use texture color
+    else
+        baseColor = objectColor; // Use uniform color
 
     vec3 norm = normalize(fragNormal);
     vec3 lightDir = normalize(lightPos - fragPos);
@@ -37,8 +42,8 @@ void main() {
     vec3 specular = 1.0 * spec * lightColor;
 
     // Ambient light and diffuse light are "colored" by objectColor
-    vec3 ambient_light  = ambient * texColor;
-    vec3 diffuse_light  = diffuse * texColor;
+    vec3 ambient_light  = ambient * baseColor;
+    vec3 diffuse_light  = diffuse * baseColor;
 
     // Specular light directly uses the light source's color (green), making the highlight very prominent
     vec3 specular_light = specular;

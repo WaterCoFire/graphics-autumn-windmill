@@ -13,7 +13,7 @@
 #include "stb_image.h"
 
 #include "geometry.h"
-#include "Model.h" // New: Include our Model loader
+#include "Model.h"
 
 /*
  * IMPORTANT!
@@ -129,6 +129,41 @@ unsigned int loadCubeMap(std::vector<std::string> faces) {
     return textureID;
 }
 
+// Function for loading a 2D texture from file
+unsigned int loadTexture(char const *path) {
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+
+    int width, height, nrComponents;
+    unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0);
+    if (data) {
+        GLenum format;
+        if (nrComponents == 1)
+            format = GL_RED;
+        else if (nrComponents == 3)
+            format = GL_RGB;
+        else if (nrComponents == 4)
+            format = GL_RGBA;
+
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        stbi_image_free(data);
+    } else {
+        std::cout << "Texture failed to load at path: " << path << std::endl;
+        stbi_image_free(data);
+    }
+
+    return textureID;
+}
+
+
 int main() {
     // GLFW initialization
     if (!glfwInit())
@@ -180,6 +215,7 @@ int main() {
     GLint objectColorLoc = glGetUniformLocation(program, "objectColor");
     GLint shininessLoc = glGetUniformLocation(program, "shininess");
     GLint ambientColorLoc = glGetUniformLocation(program, "ambientColor");
+    GLint useTextureLoc = glGetUniformLocation(program, "useTexture");
 
     // Controllable light
     glUseProgram(program);
@@ -362,7 +398,7 @@ int main() {
     glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), static_cast<void *>(nullptr));
 
     std::vector<std::string> faces{
         "textures/sky_15_2k/sky_15_cubemap_2k/px.png",
@@ -377,6 +413,13 @@ int main() {
     glUseProgram(skyboxProgram);
     glUniform1i(glGetUniformLocation(skyboxProgram, "skybox"), 0);
     // === End of Skybox ===
+
+    // === Load Textures ===
+    unsigned int groundTexture = loadTexture("textures/Grass004_1K-JPG/Grass004_1K-JPG_Color.jpg");
+
+    // === Texture Uniforms ===
+    glUseProgram(program);
+    glUniform1i(glGetUniformLocation(program, "texture_diffuse1"), 0);
 
     // Display control tip in console
     std::cout << "Controls:\n";
@@ -513,6 +556,10 @@ int main() {
         // === Draw Skybox end ===
 
         // === Draw Windmill Main Body ===
+
+        // Use color, not texture
+        glUniform1i(useTextureLoc, 0);
+
         // Main body Part 1 - Tower (Quadrangular Frustum)
         glm::mat4 model = glm::mat4(1.0f);
         // Rotate the tower (tetrahedron) and cube together around the Y-axis
@@ -570,6 +617,10 @@ int main() {
         // === Draw Hub end ===
 
         // === Draw Ground ===
+
+        // Use texture, not color
+        glUniform1i(useTextureLoc, 1);
+
         model = glm::mat4(1.0f); // Reset model matrix (Ground is at World Origin)
         normalMat = glm::transpose(glm::inverse(glm::mat3(model)));
 
@@ -579,7 +630,11 @@ int main() {
         // Ground color
         glUniform3f(objectColorLoc, 0.32f, 0.53f, 0.05f);
 
-        // New: Draw the ground using the Model class
+        // Bind ground texture
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, groundTexture);
+
+        // Draw the ground using the Model class
         groundModel.Draw(program);
         // === Draw Ground end ===
 
@@ -602,6 +657,8 @@ int main() {
     glDeleteBuffers(1, &hubEBO);
     glDeleteVertexArrays(1, &skyboxVAO);
     glDeleteBuffers(1, &skyboxVBO);
+
+    glDeleteTextures(1, &groundTexture);
 
     glDeleteProgram(program);
     glDeleteProgram(skyboxProgram);
