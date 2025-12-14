@@ -8,8 +8,6 @@ A lovely Autumn Windmill implemented in OpenGL. I don't claim this is an A-grade
 
 By Jieshen Cai
 
-![AutumnWindmill.png](AutumnWindmill.png)
-
 ## Controls
 
 - Camera: W/S/A/D/Q/E to move (forward/back/left/right/down/up), camera always looks at the windmill
