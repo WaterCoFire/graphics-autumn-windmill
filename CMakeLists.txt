@@ -82,10 +82,13 @@ endif ()
 file(COPY
         shader.vert
         shader.frag
+        skybox.vert
+        skybox.frag
         DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 file(COPY
         objects
+        textures
         DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
 )

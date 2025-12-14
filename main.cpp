@@ -8,6 +8,10 @@
 #include <sstream>
 #include <vector>
 #include <cmath>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 #include "geometry.h"
 #include "Model.h" // New: Include our Model loader
 
@@ -82,6 +86,49 @@ GLuint loadShader(const char *vertexPath, const char *fragmentPath) {
     return shaderProgram;
 }
 
+
+// Function for loading a cube map texture from 6 individual texture faces
+// Order:
+// +X (right)
+// -X (left)
+// +Y (top)
+// -Y (bottom)
+// +Z (front)
+// -Z (back)
+unsigned int loadCubeMap(std::vector<std::string> faces) {
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+    int width, height, nrChannels;
+    for (unsigned int i = 0; i < faces.size(); i++) {
+        unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+        if (data) {
+            GLenum format;
+            if (nrChannels == 3)
+                format = GL_RGB;
+            else if (nrChannels == 4)
+                format = GL_RGBA;
+            else {
+                std::cout << "Unsupported image format for cube map: " << faces[i] << std::endl;
+                stbi_image_free(data);
+                continue;
+            }
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE,
+                         data);
+            stbi_image_free(data);
+        } else {
+            std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
+            stbi_image_free(data);
+        }
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    return textureID;
+}
+
 int main() {
     // GLFW initialization
     if (!glfwInit())
@@ -120,6 +167,7 @@ int main() {
     // Shaders
     GLuint program = loadShader("shader.vert", "shader.frag");
     glUseProgram(program);
+    GLuint skyboxProgram = loadShader("skybox.vert", "skybox.frag");
 
     // Get uniform location
     GLint modelLoc = glGetUniformLocation(program, "model");
@@ -134,6 +182,7 @@ int main() {
     GLint ambientColorLoc = glGetUniformLocation(program, "ambientColor");
 
     // Controllable light
+    glUseProgram(program);
     glUniform3f(lightColorLoc, 1.0f, 0.5f, 0.1f);
 
     // Global ambient color
@@ -143,7 +192,7 @@ int main() {
     glUniform1f(shininessLoc, 32.0f);
 
     // === Load Models ===
-    // New: Load the ground plane using our Model class
+    // Load the ground plane using Model class
     Model groundModel("objects/plane.obj");
 
     // === Tower (Quadrangular Frustum) ===
@@ -154,9 +203,11 @@ int main() {
     glGenBuffers(1, &towerEBO);
     glBindVertexArray(towerVAO);
     glBindBuffer(GL_ARRAY_BUFFER, towerVBO);
-    glBufferData(GL_ARRAY_BUFFER, Geometry::towerVertices.size() * sizeof(float), Geometry::towerVertices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, Geometry::towerVertices.size() * sizeof(float), Geometry::towerVertices.data(),
+                 GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, towerEBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, Geometry::towerIndices.size() * sizeof(GLuint), Geometry::towerIndices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, Geometry::towerIndices.size() * sizeof(GLuint), Geometry::towerIndices.data(),
+                 GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), static_cast<void *>(nullptr));
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void *>(3 * sizeof(float)));
@@ -171,9 +222,11 @@ int main() {
     glGenBuffers(1, &capEBO);
     glBindVertexArray(capVAO);
     glBindBuffer(GL_ARRAY_BUFFER, capVBO);
-    glBufferData(GL_ARRAY_BUFFER, Geometry::capVertices.size() * sizeof(float), Geometry::capVertices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, Geometry::capVertices.size() * sizeof(float), Geometry::capVertices.data(),
+                 GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, capEBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, Geometry::capIndices.size() * sizeof(GLuint), Geometry::capIndices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, Geometry::capIndices.size() * sizeof(GLuint), Geometry::capIndices.data(),
+                 GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), static_cast<void *>(nullptr));
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void *>(3 * sizeof(float)));
@@ -188,9 +241,11 @@ int main() {
     glGenBuffers(1, &bladeEBO);
     glBindVertexArray(bladeVAO);
     glBindBuffer(GL_ARRAY_BUFFER, bladeVBO);
-    glBufferData(GL_ARRAY_BUFFER, Geometry::bladeVertices.size() * sizeof(float), Geometry::bladeVertices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, Geometry::bladeVertices.size() * sizeof(float), Geometry::bladeVertices.data(),
+                 GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bladeEBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, Geometry::bladeIndices.size() * sizeof(GLuint), Geometry::bladeIndices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, Geometry::bladeIndices.size() * sizeof(GLuint), Geometry::bladeIndices.data(),
+                 GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), static_cast<void *>(nullptr));
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void *>(3 * sizeof(float)));
@@ -282,6 +337,46 @@ int main() {
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
     // === End of Hub ===
+
+    // === Skybox ===
+    float skyboxVertices[] = {
+        // positions
+        -1.0f, 1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, -1.0f, 1.0f, -1.0f,
+        -1.0f, -1.0f, 1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, -1.0f,
+        -1.0f, 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, -1.0f, 1.0f,
+        1.0f, -1.0f, -1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f, 1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f, 1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f,
+        -1.0f, 1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f
+    };
+
+    GLuint skyboxVAO, skyboxVBO;
+    glGenVertexArrays(1, &skyboxVAO);
+    glGenBuffers(1, &skyboxVBO);
+    glBindVertexArray(skyboxVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
+
+    std::vector<std::string> faces{
+        "textures/sky_15_2k/sky_15_cubemap_2k/px.png",
+        "textures/sky_15_2k/sky_15_cubemap_2k/nx.png",
+        "textures/sky_15_2k/sky_15_cubemap_2k/py.png",
+        "textures/sky_15_2k/sky_15_cubemap_2k/ny.png",
+        "textures/sky_15_2k/sky_15_cubemap_2k/pz.png",
+        "textures/sky_15_2k/sky_15_cubemap_2k/nz.png"
+    };
+    unsigned int cubeMapTexture = loadCubeMap(faces);
+
+    glUseProgram(skyboxProgram);
+    glUniform1i(glGetUniformLocation(skyboxProgram, "skybox"), 0);
+    // === End of Skybox ===
 
     // Display control tip in console
     std::cout << "Controls:\n";
@@ -392,6 +487,31 @@ int main() {
         glUniform3fv(viewPosLoc, 1, glm::value_ptr(cameraPos));
         glUniform3fv(lightPosLoc, 1, glm::value_ptr(lightPos));
 
+        // === Draw Skybox ===
+        // Draw skybox as first object
+        glDepthFunc(GL_LEQUAL);
+        // Change depth function so depth test passes when values are equal to depth buffer's content
+        glUseProgram(skyboxProgram);
+        // Remove translation from the view matrix
+        glm::mat4 skyboxView = glm::mat4(glm::mat3(view));
+        glUniformMatrix4fv(glGetUniformLocation(skyboxProgram, "view"), 1, GL_FALSE, glm::value_ptr(skyboxView));
+        glUniformMatrix4fv(glGetUniformLocation(skyboxProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        // skybox cube
+        glBindVertexArray(skyboxVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapTexture);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glBindVertexArray(0);
+        glDepthFunc(GL_LESS); // Set depth function back to default
+
+        glUseProgram(program);
+
+        glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+        glUniform3fv(viewPosLoc, 1, glm::value_ptr(cameraPos));
+        glUniform3fv(lightPosLoc, 1, glm::value_ptr(lightPos));
+        // === Draw Skybox end ===
+
         // === Draw Windmill Main Body ===
         // Main body Part 1 - Tower (Quadrangular Frustum)
         glm::mat4 model = glm::mat4(1.0f);
@@ -480,9 +600,11 @@ int main() {
     glDeleteVertexArrays(1, &hubVAO);
     glDeleteBuffers(1, &hubVBO);
     glDeleteBuffers(1, &hubEBO);
-    // Note: groundModel's resources are cleaned up automatically by its destructor
+    glDeleteVertexArrays(1, &skyboxVAO);
+    glDeleteBuffers(1, &skyboxVBO);
 
     glDeleteProgram(program);
+    glDeleteProgram(skyboxProgram);
 
     glfwTerminate();
     return 0;
