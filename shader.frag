@@ -15,6 +15,7 @@ uniform bool useTexture; // Use texture color or object color
 uniform float shininess;
 
 uniform sampler2D texture_diffuse1;
+uniform bool u_unlit; // A switch to disable lighting
 
 void main() {
     vec3 baseColor;
@@ -22,6 +23,12 @@ void main() {
         baseColor = texture(texture_diffuse1, TexCoords).rgb; // Use texture color
     else
         baseColor = objectColor; // Use uniform color
+
+    // If u_unlit is true, skip all lighting calculations
+    if(u_unlit) {
+        color = vec4(baseColor, 1.0);
+        return;
+    }
 
     vec3 norm = normalize(fragNormal);
     vec3 lightDir = normalize(lightPos - fragPos);

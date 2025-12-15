@@ -213,6 +213,7 @@ int main() {
     GLint shininessLoc = glGetUniformLocation(program, "shininess");
     GLint ambientColorLoc = glGetUniformLocation(program, "ambientColor");
     GLint useTextureLoc = glGetUniformLocation(program, "useTexture");
+    GLint unlitLoc = glGetUniformLocation(program, "u_unlit");
 
     // Controllable light
     glUseProgram(program);
@@ -405,6 +406,105 @@ int main() {
     glBindVertexArray(0);
     // === End of Hub ===
 
+    // === Chimney (Cylinder) ===
+    std::vector<float> chimneyVertexData;
+    std::vector<GLuint> chimneyIndices;
+    const int chimneySegments = 32;
+    const float chimneyRadius = 1.0f;
+    const float chimneyHeight = 1.0f; // We will scale it to the desired height later
+    const int chimneyVertexStride = 8; // 3 for position, 3 for normal, 2 for UV
+
+    // Generate vertices for the side of the cylinder
+    for (int i = 0; i <= chimneySegments; ++i) {
+        float angle = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(chimneySegments);
+        float x = chimneyRadius * std::cos(angle);
+        float z = chimneyRadius * std::sin(angle);
+        float u = static_cast<float>(i) / static_cast<float>(chimneySegments);
+
+        glm::vec3 normal = glm::normalize(glm::vec3(x, 0.0f, z));
+
+        // Add top vertex for this segment
+        chimneyVertexData.insert(chimneyVertexData.end(), {
+                                     x, chimneyHeight / 2.0f, z, normal.x, normal.y, normal.z, u, 1.0f
+                                 });
+        // Add bottom vertex for this segment
+        chimneyVertexData.insert(chimneyVertexData.end(), {
+                                     x, -chimneyHeight / 2.0f, z, normal.x, normal.y, normal.z, u, 0.0f
+                                 });
+    }
+
+    // Generate indices for the side of the cylinder
+    for (int i = 0; i < chimneySegments; ++i) {
+        GLuint topLeft = i * 2;
+        GLuint bottomLeft = i * 2 + 1;
+        GLuint topRight = (i + 1) * 2;
+        GLuint bottomRight = (i + 1) * 2 + 1;
+
+        chimneyIndices.insert(chimneyIndices.end(), {bottomLeft, topRight, topLeft});
+        chimneyIndices.insert(chimneyIndices.end(), {bottomLeft, bottomRight, topRight});
+    }
+
+    // --- Generate vertices and indices for caps ---
+    // Top cap
+    GLuint topCenterIndex = chimneyVertexData.size() / chimneyVertexStride;
+    chimneyVertexData.insert(chimneyVertexData.end(), {0.0f, chimneyHeight / 2.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.5f, 0.5f});
+    for (int i = 0; i <= chimneySegments; ++i) {
+        float angle = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(chimneySegments);
+        float x = chimneyRadius * std::cos(angle);
+        float z = chimneyRadius * std::sin(angle);
+        chimneyVertexData.insert(chimneyVertexData.end(), {
+                                     x, chimneyHeight / 2.0f, z, 0.0f, 1.0f, 0.0f, 0.5f + 0.5f * x, 0.5f + 0.5f * z
+                                 });
+    }
+    for (int i = 0; i < chimneySegments; ++i) {
+        chimneyIndices.insert(chimneyIndices.end(), {topCenterIndex, topCenterIndex + i + 1, topCenterIndex + i + 2});
+    }
+
+    // Bottom cap
+    GLuint bottomCenterIndex = chimneyVertexData.size() / chimneyVertexStride;
+    chimneyVertexData.insert(chimneyVertexData.end(),
+                             {0.0f, -chimneyHeight / 2.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.5f, 0.5f});
+    for (int i = 0; i <= chimneySegments; ++i) {
+        float angle = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(chimneySegments);
+        float x = chimneyRadius * std::cos(angle);
+        float z = chimneyRadius * std::sin(angle);
+        chimneyVertexData.insert(chimneyVertexData.end(), {
+                                     x, -chimneyHeight / 2.0f, z, 0.0f, -1.0f, 0.0f, 0.5f + 0.5f * x, 0.5f + 0.5f * z
+                                 });
+    }
+    for (int i = 0; i < chimneySegments; ++i) {
+        chimneyIndices.insert(chimneyIndices.end(), {
+                                  bottomCenterIndex, bottomCenterIndex + i + 2, bottomCenterIndex + i + 1
+                              });
+    }
+
+    GLuint chimneyVAO, chimneyVBO, chimneyEBO;
+    glGenVertexArrays(1, &chimneyVAO);
+    glGenBuffers(1, &chimneyVBO);
+    glGenBuffers(1, &chimneyEBO);
+    glBindVertexArray(chimneyVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, chimneyVBO);
+    glBufferData(GL_ARRAY_BUFFER, chimneyVertexData.size() * sizeof(float), chimneyVertexData.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, chimneyEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, chimneyIndices.size() * sizeof(GLuint), chimneyIndices.data(),
+                 GL_STATIC_DRAW);
+
+    // Vertex attribute pointers
+    // Position
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, chimneyVertexStride * sizeof(float), static_cast<void *>(nullptr));
+    glEnableVertexAttribArray(0);
+    // Normal
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, chimneyVertexStride * sizeof(float),
+                          reinterpret_cast<void *>(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    // Texture Coordinate
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, chimneyVertexStride * sizeof(float),
+                          reinterpret_cast<void *>(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+    glBindVertexArray(0);
+    // === End of Chimney ===
+
     // === Skybox ===
     GLuint skyboxVAO, skyboxVBO;
     glGenVertexArrays(1, &skyboxVAO);
@@ -433,6 +533,7 @@ int main() {
     unsigned int groundTexture = loadTexture("textures/Grass004_1K-JPG/Grass004_1K-JPG_Color.jpg");
     unsigned int towerTexture = loadTexture("textures/Bricks099_1K-JPG/Bricks099_1K-JPG_Color.jpg");
     unsigned int capTexture = loadTexture("textures/Bricks094_1K-JPG/Bricks094_1K-JPG_Color.jpg");
+    unsigned int chimneyTexture = loadTexture("textures/PavingStones135_1K-JPG/PavingStones135_1K-JPG_Color.jpg");
 
     // === Texture Uniforms ===
     glUseProgram(program);
@@ -644,9 +745,40 @@ int main() {
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(hubIndices.size()), GL_UNSIGNED_INT, nullptr);
         // === Draw Hub end ===
 
+        // === Draw Chimney ===
+
+        // Set u_unlit to true (1) to disable lighting
+        glUniform1i(unlitLoc, 1);
+
+        // Use texture
+        glUniform1i(useTextureLoc, 1);
+
+        // Bind chimney texture
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, chimneyTexture);
+
+        // Create model matrix to position and scale the chimney
+        model = glm::mat4(1.0f);
+        // Move it back-left of the windmill and move it up so its base is on the ground plane
+        model = glm::translate(model, glm::vec3(-10.0f, 7.5f, -30.0f));
+        // Scaling
+        model = glm::scale(model, glm::vec3(0.8f, 15.0f, 0.8f));
+
+        normalMat = glm::transpose(glm::inverse(glm::mat3(model)));
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix3fv(normalMatLoc, 1, GL_FALSE, glm::value_ptr(normalMat));
+
+        // Draw the chimney
+        glBindVertexArray(chimneyVAO);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(chimneyIndices.size()), GL_UNSIGNED_INT, nullptr);
+
+        // Set u_unlit back to false (0) for other objects
+        glUniform1i(unlitLoc, 0);
+        // === Draw Chimney end ===
+
         // === Draw Ground ===
 
-        // Use texture, not color
+        // Use texture
         glUniform1i(useTextureLoc, 1);
 
         model = glm::mat4(1.0f); // Reset model matrix (Ground is at World Origin)
@@ -685,10 +817,14 @@ int main() {
     glDeleteBuffers(1, &hubEBO);
     glDeleteVertexArrays(1, &skyboxVAO);
     glDeleteBuffers(1, &skyboxVBO);
+    glDeleteVertexArrays(1, &chimneyVAO);
+    glDeleteBuffers(1, &chimneyVBO);
+    glDeleteBuffers(1, &chimneyEBO);
 
     glDeleteTextures(1, &groundTexture);
     glDeleteTextures(1, &towerTexture);
     glDeleteTextures(1, &capTexture);
+    glDeleteTextures(1, &chimneyTexture);
 
     glDeleteProgram(program);
     glDeleteProgram(skyboxProgram);
