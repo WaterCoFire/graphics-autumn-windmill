@@ -52,7 +52,8 @@ set(COMMON_SRC
         common/glad.c
         common/wrapper_glfw.cpp
         common/wrapper_glfw.h
-        common/Model.cpp
+        common/model.cpp
+        common/particle.cpp
 )
 
 # === executable ===
@@ -84,6 +85,8 @@ file(COPY
         shader.frag
         skybox.vert
         skybox.frag
+        particle.vert
+        particle.frag
         DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
 )
 

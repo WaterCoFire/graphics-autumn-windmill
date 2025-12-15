@@ -13,6 +13,7 @@
 
 #include "geometry.h"
 #include "model.h"
+#include "particle.h"
 
 /*
  * IMPORTANT!
@@ -200,6 +201,7 @@ int main() {
     GLuint program = loadShader("shader.vert", "shader.frag");
     glUseProgram(program);
     GLuint skyboxProgram = loadShader("skybox.vert", "skybox.frag");
+    GLuint particleProgram = loadShader("particle.vert", "particle.frag");
 
     // Get uniform location
     GLint modelLoc = glGetUniformLocation(program, "model");
@@ -534,10 +536,15 @@ int main() {
     unsigned int towerTexture = loadTexture("textures/Bricks099_1K-JPG/Bricks099_1K-JPG_Color.jpg");
     unsigned int capTexture = loadTexture("textures/Bricks094_1K-JPG/Bricks094_1K-JPG_Color.jpg");
     unsigned int chimneyTexture = loadTexture("textures/PavingStones135_1K-JPG/PavingStones135_1K-JPG_Color.jpg");
+    unsigned int particleTexture = loadTexture("textures/Smoke/toppng.com-realistic-smoke-texture-with-soft-particle-edges-png-399x385.png");
 
     // === Texture Uniforms ===
     glUseProgram(program);
     glUniform1i(glGetUniformLocation(program, "texture_diffuse1"), 0);
+
+    // === Particle System ===
+    const int MAX_PARTICLES = 5000;
+    ParticleSystem particleSystem(MAX_PARTICLES, particleProgram, particleTexture);
 
     // Display control tip in console
     std::cout << "Controls:\n";
@@ -636,6 +643,10 @@ int main() {
 
         mainBodyAngle = std::fmod(mainBodyAngle, 360.0f);
         bladeAngle = std::fmod(bladeAngle, 360.0f);
+
+        // === Update Particles ===
+        int newParticles = 2; // Spawn 2 new particles per frame
+        particleSystem.update(deltaTime, newParticles, cameraPos);
 
         // Rendering
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -798,6 +809,10 @@ int main() {
         groundModel.Draw(program);
         // === Draw Ground end ===
 
+        // === Draw Particles ===
+        particleSystem.render(view, projection);
+        // === Draw Particles end ===
+
         glBindVertexArray(0); // Swap buffer display
         glfwSwapBuffers(window);
     }
@@ -825,9 +840,11 @@ int main() {
     glDeleteTextures(1, &towerTexture);
     glDeleteTextures(1, &capTexture);
     glDeleteTextures(1, &chimneyTexture);
+    glDeleteTextures(1, &particleTexture);
 
     glDeleteProgram(program);
     glDeleteProgram(skyboxProgram);
+    glDeleteProgram(particleProgram);
 
     glfwTerminate();
     return 0;
