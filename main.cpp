@@ -324,7 +324,7 @@ int main() {
     constexpr float radius = 0.3f;
     constexpr float length = 0.5f;
 
-    // Centers: X=0.0, Y=0.0
+    // Centers: X = 0.0, Y = 0.0
     // Front Center (Z = length/2)
     hubVertexData.insert(hubVertexData.end(), {0.0f, 0.0f, length / 2.0f, 0.0f, 0.0f, 1.0f}); // Index 0
     // Back Center (Z = -length/2)
@@ -411,10 +411,10 @@ int main() {
     // === Chimney (Cylinder) ===
     std::vector<float> chimneyVertexData;
     std::vector<GLuint> chimneyIndices;
-    const int chimneySegments = 32;
-    const float chimneyRadius = 1.0f;
-    const float chimneyHeight = 1.0f; // We will scale it to the desired height later
-    const int chimneyVertexStride = 8; // 3 for position, 3 for normal, 2 for UV
+    constexpr int chimneySegments = 32;
+    constexpr float chimneyRadius = 1.0f;
+    constexpr float chimneyHeight = 1.0f;
+    constexpr int chimneyVertexStride = 8; // 3 for position, 3 for normal, 2 for UV
 
     // Generate vertices for the side of the cylinder
     for (int i = 0; i <= chimneySegments; ++i) {
@@ -425,17 +425,17 @@ int main() {
 
         glm::vec3 normal = glm::normalize(glm::vec3(x, 0.0f, z));
 
-        // Add top vertex for this segment
+        // Top vertex
         chimneyVertexData.insert(chimneyVertexData.end(), {
                                      x, chimneyHeight / 2.0f, z, normal.x, normal.y, normal.z, u, 1.0f
                                  });
-        // Add bottom vertex for this segment
+        // Bottom vertex
         chimneyVertexData.insert(chimneyVertexData.end(), {
                                      x, -chimneyHeight / 2.0f, z, normal.x, normal.y, normal.z, u, 0.0f
                                  });
     }
 
-    // Generate indices for the side of the cylinder
+    // Indices for the side of the cylinder
     for (int i = 0; i < chimneySegments; ++i) {
         GLuint topLeft = i * 2;
         GLuint bottomLeft = i * 2 + 1;
@@ -446,7 +446,7 @@ int main() {
         chimneyIndices.insert(chimneyIndices.end(), {bottomLeft, bottomRight, topRight});
     }
 
-    // --- Generate vertices and indices for caps ---
+    // --- Vertices and indices for caps ---
     // Top cap
     GLuint topCenterIndex = chimneyVertexData.size() / chimneyVertexStride;
     chimneyVertexData.insert(chimneyVertexData.end(), {0.0f, chimneyHeight / 2.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.5f, 0.5f});
@@ -543,7 +543,7 @@ int main() {
     glUniform1i(glGetUniformLocation(program, "texture_diffuse1"), 0);
 
     // === Particle System ===
-    const int MAX_PARTICLES = 5000;
+    constexpr int MAX_PARTICLES = 5000;
     ParticleSystem particleSystem(MAX_PARTICLES, particleProgram, particleTexture);
 
     // Display control tip in console
@@ -792,7 +792,10 @@ int main() {
         // Use texture
         glUniform1i(useTextureLoc, 1);
 
-        model = glm::mat4(1.0f); // Reset model matrix (Ground is at World Origin)
+        model = glm::mat4(1.0f); // Reset model matrix
+        // Move the ground plane up slightly to meet the base of the objects
+        model = glm::translate(model, glm::vec3(0.0f, 0.5f, 0.0f));
+
         normalMat = glm::transpose(glm::inverse(glm::mat3(model)));
 
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));

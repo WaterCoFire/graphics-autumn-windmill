@@ -10,12 +10,12 @@ struct Particle {
     glm::vec3 pos, speed;
     glm::vec4 color;
     float size;
-    float life; // Remaining life of the particle. if < 0, means particle is dead.
-    float cameradistance; // *Squared* distance to the camera. if dead : -1.0f
+    float life; // Remaining life of the particle; if < 0 particle is dead
+    float cameraDistance; // Squared distance to the camera. if dead: -1.0f
 
     bool operator<(const Particle &that) const {
         // Sort in reverse order : far particles drawn first.
-        return this->cameradistance > that.cameradistance;
+        return this->cameraDistance > that.cameraDistance;
     }
 };
 
@@ -27,10 +27,10 @@ public:
 
     void update(float deltaTime, int newParticles, glm::vec3 cameraPosition);
 
-    void render(const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix);
+    void render(const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix) const;
 
 private:
-    void spawnParticle(Particle &particle);
+    static void spawnParticle(Particle &particle);
 
     int findUnusedParticle();
 

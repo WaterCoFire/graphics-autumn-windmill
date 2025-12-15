@@ -2,8 +2,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <algorithm>
-#include <ctime>
-#include <cstddef> // For offsetof
+#include <cstddef>
 
 // Data structure for instanced rendering, matches layout in the shader
 struct ParticleInstanceData {
@@ -19,14 +18,14 @@ float rand_float(float min, float max) {
 
 ParticleSystem::ParticleSystem(unsigned int maxParticles, GLuint shader, GLuint texture)
     : max_particles(maxParticles), shader_id(shader), texture_id(texture) {
-    srand(time(NULL));
+    srand(time(nullptr));
     particles.resize(max_particles);
 
     for (auto& p : particles) {
         p.life = -1.0f;
     }
 
-    static const GLfloat g_vertex_buffer_data[] = {
+    static constexpr GLfloat g_vertex_buffer_data[] = {
         -0.5f, -0.5f, 0.0f,
         0.5f, -0.5f, 0.0f,
         -0.5f, 0.5f, 0.0f,
@@ -41,7 +40,7 @@ ParticleSystem::ParticleSystem(unsigned int maxParticles, GLuint shader, GLuint 
     glBindBuffer(GL_ARRAY_BUFFER, vbo_quad);
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void *) 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, static_cast<void *>(nullptr));
     glVertexAttribDivisor(0, 0); // Not instanced
 
     // --- 2. Interleaved instanced data (attributes 1 and 2) ---
@@ -52,13 +51,13 @@ ParticleSystem::ParticleSystem(unsigned int maxParticles, GLuint shader, GLuint 
     // Attribute 1: Position (vec3) and Size (float)
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(ParticleInstanceData),
-                          (void *) offsetof(ParticleInstanceData, posAndSize));
+                          reinterpret_cast<void *>(offsetof(ParticleInstanceData, posAndSize)));
     glVertexAttribDivisor(1, 1); // Instanced
 
     // Attribute 2: Color (vec4)
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(ParticleInstanceData),
-                          (void *) offsetof(ParticleInstanceData, color));
+                          reinterpret_cast<void *>(offsetof(ParticleInstanceData, color)));
     glVertexAttribDivisor(2, 1); // Instanced
 
     glBindVertexArray(0);
@@ -99,14 +98,14 @@ void ParticleSystem::spawnParticle(Particle &p) {
 
     // A clear, consistent upward speed
     // Y-speed of 4 means it will travel 8 units up over its 2s lifetime
-    glm::vec3 maindir = glm::vec3(0.0f, 4.0f, 0.0f);
+    glm::vec3 mainDir = glm::vec3(0.0f, 4.0f, 0.0f);
     // Very slight randomness for variation
-    glm::vec3 randomdir = glm::vec3(
+    glm::vec3 randomDir = glm::vec3(
         rand_float(-0.3f, 0.3f),
         rand_float(-0.3f, 0.3f),
         rand_float(-0.3f, 0.3f)
     );
-    p.speed = maindir + randomdir;
+    p.speed = mainDir + randomDir;
 
     p.color = glm::vec4(1.0f); // Alpha will be controlled for fade-out
     p.size = rand_float(1.4f, 2.0f); // Size of the smoke, slightly varied
@@ -126,19 +125,19 @@ void ParticleSystem::update(float deltaTime, int newParticles, glm::vec3 cameraP
                 p.pos += p.speed * deltaTime;
 
                 glm::vec3 toCamera = p.pos - cameraPosition;
-                p.cameradistance = glm::dot(toCamera, toCamera);
+                p.cameraDistance = glm::dot(toCamera, toCamera);
 
                 // Fade out based on its 2-second lifetime
                 p.color.a = p.life / 2.0f;
             } else {
-                p.cameradistance = -1.0f;
+                p.cameraDistance = -1.0f;
             }
         }
     }
     std::sort(particles.begin(), particles.end());
 }
 
-void ParticleSystem::render(const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix) {
+void ParticleSystem::render(const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix) const {
     std::vector<ParticleInstanceData> instance_data;
     instance_data.reserve(max_particles);
 
