@@ -645,7 +645,7 @@ int main() {
         bladeAngle = std::fmod(bladeAngle, 360.0f);
 
         // === Update Particles ===
-        int newParticles = 2; // Spawn 2 new particles per frame
+        int newParticles = 1; // Spawn 1 new particle per frame
         particleSystem.update(deltaTime, newParticles, cameraPos);
 
         // Rendering

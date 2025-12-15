@@ -1,7 +1,7 @@
 #version 410 core
 
 in vec2 TexCoords;
-in vec4 FragColor;
+in vec4 FragColor; // Contains the alpha for fading, passed from C++
 
 out vec4 color;
 
@@ -9,15 +9,14 @@ uniform sampler2D particleTexture;
 
 void main()
 {
-    // Sample the texture. The texture gives the particle its shape and alpha (transparency).
-    vec4 textureColor = texture(particleTexture, TexCoords);
+    // Sample the smoke texture to get its shape (alpha)
+    vec4 texColor = texture(particleTexture, TexCoords);
 
-    // The final color is the particle's color (passed from C++) modulated by the texture's alpha.
-    // We use the texture's RED channel for alpha, which is a common technique for single-channel textures.
-    // This makes the particle's shape defined by the texture, while its color tint is controlled from the C++ side.
-    color = vec4(FragColor.rgb, FragColor.a * textureColor.a);
+    // Force the smoke color to be a semi-transparent gray.
+    // The final alpha is a product of the texture's alpha and the particle's lifetime alpha.
+    color = vec4(0.6, 0.6, 0.6, texColor.a * FragColor.a);
 
-    // Discard fragments that are fully transparent to avoid rendering issues.
+    // Discard fragments that are almost fully transparent to avoid rendering artifacts
     if (color.a < 0.01) {
         discard;
     }

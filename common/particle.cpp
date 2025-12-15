@@ -1,61 +1,69 @@
 #include "particle.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <algorithm> // For std::sort
+#include <algorithm>
+#include <ctime>
+#include <cstddef> // For offsetof
 
-// A simple helper function to get a random float
+// Data structure for instanced rendering, matches layout in the shader
+struct ParticleInstanceData {
+    glm::vec4 posAndSize; // .xyz = position, .w = size
+    glm::vec4 color;
+};
+
+// A more robust helper function to get a random float
 float rand_float(float min, float max) {
-    return min + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (max - min)));
+    if (min > max) std::swap(min, max);
+    return min + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * (max - min);
 }
 
 ParticleSystem::ParticleSystem(unsigned int maxParticles, GLuint shader, GLuint texture)
     : max_particles(maxParticles), shader_id(shader), texture_id(texture) {
-
+    srand(time(NULL));
     particles.resize(max_particles);
 
-    // The VBO containing the 4 vertices of the particles.
+    for (auto& p : particles) {
+        p.life = -1.0f;
+    }
+
     static const GLfloat g_vertex_buffer_data[] = {
         -0.5f, -0.5f, 0.0f,
-         0.5f, -0.5f, 0.0f,
-        -0.5f,  0.5f, 0.0f,
-         0.5f,  0.5f, 0.0f,
+        0.5f, -0.5f, 0.0f,
+        -0.5f, 0.5f, 0.0f,
+        0.5f, 0.5f, 0.0f,
     };
 
     glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao); // Start recording state into the VAO
+    glBindVertexArray(vao);
 
-    // --- 1. Set up the static quad vertex data (attribute 0) ---
+    // --- 1. Static quad vertex data (attribute 0) ---
     glGenBuffers(1, &vbo_quad);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_quad);
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
-
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-    glVertexAttribDivisor(0, 0); // This attribute is not instanced
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void *) 0);
+    glVertexAttribDivisor(0, 0); // Not instanced
 
-    // --- 2. Set up the instanced particle position/size buffer (attribute 1) ---
-    glGenBuffers(1, &vbo_particle_pos);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_particle_pos);
-    // Initialize with an empty buffer, we'll upload data each frame
-    glBufferData(GL_ARRAY_BUFFER, max_particles * 4 * sizeof(float), nullptr, GL_STREAM_DRAW);
+    // --- 2. Interleaved instanced data (attributes 1 and 2) ---
+    glGenBuffers(1, &vbo_instanced_data);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_instanced_data);
+    glBufferData(GL_ARRAY_BUFFER, max_particles * sizeof(ParticleInstanceData), nullptr, GL_STREAM_DRAW);
 
+    // Attribute 1: Position (vec3) and Size (float)
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
-    glVertexAttribDivisor(1, 1); // This attribute is instanced
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(ParticleInstanceData),
+                          (void *) offsetof(ParticleInstanceData, posAndSize));
+    glVertexAttribDivisor(1, 1); // Instanced
 
-    // --- 3. Set up the instanced particle color buffer (attribute 2) ---
-    glGenBuffers(1, &vbo_particle_color);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_particle_color);
-    // Initialize with an empty buffer, we'll upload data each frame
-    glBufferData(GL_ARRAY_BUFFER, max_particles * 4 * sizeof(float), nullptr, GL_STREAM_DRAW);
-
+    // Attribute 2: Color (vec4)
     glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
-    glVertexAttribDivisor(2, 1); // This attribute is instanced
+    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(ParticleInstanceData),
+                          (void *) offsetof(ParticleInstanceData, color));
+    glVertexAttribDivisor(2, 1); // Instanced
 
-    glBindVertexArray(0); // Stop recording state into the VAO
+    glBindVertexArray(0);
 
-    // Get uniform locations from the particle shader
+    // Get uniform locations
     glUseProgram(shader_id);
     view_loc = glGetUniformLocation(shader_id, "view");
     projection_loc = glGetUniformLocation(shader_id, "projection");
@@ -65,11 +73,9 @@ ParticleSystem::ParticleSystem(unsigned int maxParticles, GLuint shader, GLuint 
 ParticleSystem::~ParticleSystem() {
     glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &vbo_quad);
-    glDeleteBuffers(1, &vbo_particle_pos);
-    glDeleteBuffers(1, &vbo_particle_color);
+    glDeleteBuffers(1, &vbo_instanced_data);
 }
 
-// Finds an unused particle in the container.
 int ParticleSystem::findUnusedParticle() {
     for (int i = last_used_particle; i < max_particles; i++) {
         if (particles[i].life < 0) {
@@ -83,108 +89,88 @@ int ParticleSystem::findUnusedParticle() {
             return i;
         }
     }
-    return 0; // All particles are taken, override the first one
+    return 0;
 }
 
 void ParticleSystem::spawnParticle(Particle &p) {
-    p.life = rand_float(2.0f, 4.0f); // Particle lives for 2-4 seconds
-    p.pos = glm::vec3(-10.0f, 15.1f, -30.0f); // Spawn at the top of the chimney
+    // Lifetime: 2 seconds
+    p.life = 2.0f;
+    p.pos = glm::vec3(-10.0f, 15.0f, -30.0f); // Correct chimney top
 
-    // Give it a random initial velocity to spread out
-    float spread = 1.5f;
-    glm::vec3 maindir = glm::vec3(0.0f, 2.0f, 0.0f); // Smoke rises
+    // A clear, consistent upward speed
+    // Y-speed of 4 means it will travel 8 units up over its 2s lifetime
+    glm::vec3 maindir = glm::vec3(0.0f, 4.0f, 0.0f);
+    // Very slight randomness for variation
     glm::vec3 randomdir = glm::vec3(
-        rand_float(-spread, spread),
-        rand_float(-spread, spread),
-        rand_float(-spread, spread)
+        rand_float(-0.3f, 0.3f),
+        rand_float(-0.3f, 0.3f),
+        rand_float(-0.3f, 0.3f)
     );
-    p.speed = maindir + randomdir * 0.2f;
+    p.speed = maindir + randomdir;
 
-    // Give it a random color (grayscale for smoke)
-    unsigned char r = rand() % 50 + 205; // 205-255
-    p.color = glm::vec4(r / 255.0f, r / 255.0f, r / 255.0f, 1.0f);
-
-    p.size = rand_float(0.5f, 1.5f);
+    p.color = glm::vec4(1.0f); // Alpha will be controlled for fade-out
+    p.size = rand_float(1.4f, 2.0f); // Size of the smoke, slightly varied
 }
 
 void ParticleSystem::update(float deltaTime, int newParticles, glm::vec3 cameraPosition) {
-    // Add new particles
     for (int i = 0; i < newParticles; i++) {
         int particleIndex = findUnusedParticle();
         spawnParticle(particles[particleIndex]);
     }
 
-    // Simulate all particles
-    int particles_count = 0;
-    for (int i = 0; i < max_particles; i++) {
-        Particle &p = particles[i];
-
+    for (auto &p: particles) {
         if (p.life > 0.0f) {
-            // Decrease life
             p.life -= deltaTime;
             if (p.life > 0.0f) {
-                // Simulate simple physics
-                p.speed += glm::vec3(0.0f, 0.5f, 0.0f) * deltaTime * 0.5f; // Smoke accelerates upwards slightly
+                // Simple, constant velocity motion. No extra forces.
                 p.pos += p.speed * deltaTime;
+
                 glm::vec3 toCamera = p.pos - cameraPosition;
                 p.cameradistance = glm::dot(toCamera, toCamera);
 
-                // Fade out particles
-                p.color.a = p.life / 2.0f; // Fade out over 2 seconds
-                if (p.color.a > 1.0f) p.color.a = 1.0f;
+                // Fade out based on its 2-second lifetime
+                p.color.a = p.life / 2.0f;
             } else {
-                // Particle just died
                 p.cameradistance = -1.0f;
             }
-            particles_count++;
         }
     }
-
     std::sort(particles.begin(), particles.end());
 }
 
-void ParticleSystem::render(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix) {
+void ParticleSystem::render(const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix) {
+    std::vector<ParticleInstanceData> instance_data;
+    instance_data.reserve(max_particles);
 
-    std::vector<glm::vec4> particle_positions_and_size;
-    std::vector<glm::vec4> particle_colors;
-
-    for(const auto& p : particles) {
-        if(p.life > 0.0f) {
-            particle_positions_and_size.push_back(glm::vec4(p.pos, p.size));
-            particle_colors.push_back(p.color);
+    for (const auto &p: particles) {
+        if (p.life > 0.0f) {
+            instance_data.push_back({glm::vec4(p.pos, p.size), p.color});
         }
     }
 
-    if (particle_positions_and_size.empty()) {
-        return; // Nothing to render
-    }
+    if (instance_data.empty()) return;
 
-    // --- Upload this frame's data to the GPU ---
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_particle_pos);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, particle_positions_and_size.size() * sizeof(glm::vec4), &particle_positions_and_size[0]);
-
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_particle_color);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, particle_colors.size() * sizeof(glm::vec4), &particle_colors[0]);
+    // --- Simplified and Robust Data Upload ---
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_instanced_data);
+    // Replace the entire buffer content with the new data for this frame.
+    glBufferData(GL_ARRAY_BUFFER, instance_data.size() * sizeof(ParticleInstanceData), &instance_data[0],
+                 GL_STREAM_DRAW);
 
     // --- Render ---
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glDepthMask(GL_FALSE); // Don't write to depth buffer for transparent objects
+    glDepthMask(GL_FALSE);
 
     glUseProgram(shader_id);
 
-    // Set uniforms
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture_id);
     glUniform1i(texture_sampler_loc, 0);
     glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
     glUniformMatrix4fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 
-    // Bind the VAO that contains our complete rendering recipe
     glBindVertexArray(vao);
-
-    // Draw all particles in a single call
-    glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, particle_positions_and_size.size());
+    glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, instance_data.size());
 
     // --- Reset state ---
     glBindVertexArray(0);
