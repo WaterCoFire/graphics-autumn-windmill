@@ -1,4 +1,6 @@
 #include "model.h"
+#include <iostream>
+#include "assimp/postprocess.h"
 
 // Loads a model from file and populates the meshes vector.
 void Model::loadModel(std::string const &path) {
@@ -22,7 +24,7 @@ void Model::loadModel(std::string const &path) {
 }
 
 // Processes a node recursively.
-void Model::processNode(aiNode *node, const aiScene *scene) {
+void Model::processNode(const aiNode *node, const aiScene *scene) {
     // Process all the node's meshes (if any)
     for(unsigned int i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
@@ -38,11 +40,11 @@ void Model::processNode(aiNode *node, const aiScene *scene) {
 Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene) {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
-    std::vector<Texture> textures;
+    const std::vector<Texture> textures;
 
     // Process vertex positions, normals and texture coordinates
     for(unsigned int i = 0; i < mesh->mNumVertices; i++) {
-        Vertex vertex;
+        Vertex vertex{};
         // Positions
         vertex.Position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
         // Normals
@@ -69,14 +71,6 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene) {
         for(unsigned int j = 0; j < face.mNumIndices; j++)
             indices.push_back(face.mIndices[j]);
     }
-
-    // Process materials (textures) - we will implement this in a future step.
-    // For now, we pass an empty vector.
-    // aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-    // std::vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
-    // textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-    // std::vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
-    // textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
 
     return Mesh(vertices, indices, textures);
 }

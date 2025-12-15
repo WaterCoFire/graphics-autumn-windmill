@@ -2,19 +2,14 @@
 #define MODEL_H
 
 #include <glad/glad.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
-#include <assimp/postprocess.h>
 
 #include "mesh.h"
 
 #include <string>
 #include <fstream>
-#include <sstream>
-#include <iostream>
 #include <map>
 #include <vector>
 
@@ -31,14 +26,14 @@ public:
     std::string directory;
 
     // Constructor, expects a filepath to a 3D model.
-    Model(std::string const &path) {
+    explicit Model(std::string const &path) {
         loadModel(path);
     }
 
     // Draws the model, and thus all its meshes
-    void Draw(GLuint shaderProgram) {
-        for (unsigned int i = 0; i < meshes.size(); i++)
-            meshes[i].Draw(shaderProgram);
+    void draw(const GLuint shaderProgram) const {
+        for (const auto & mesh : meshes)
+            mesh.draw(shaderProgram);
     }
 
 private:
@@ -46,10 +41,10 @@ private:
     void loadModel(std::string const &path);
 
     // Processes a node in a recursive fashion. Processes each individual mesh located at the node and repeats this process on its children nodes (if any).
-    void processNode(aiNode *node, const aiScene *scene);
+    void processNode(const aiNode *node, const aiScene *scene);
 
     // Processes an aiMesh object and transforms it into our own Mesh object.
-    Mesh processMesh(aiMesh *mesh, const aiScene *scene);
+    static Mesh processMesh(aiMesh *mesh, const aiScene *scene);
 
     // (Future implementation) Checks all material textures of a given type and loads the textures if they're not loaded yet.
     // The required info is returned as a Texture struct.

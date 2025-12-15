@@ -809,7 +809,7 @@ int main() {
         glBindTexture(GL_TEXTURE_2D, groundTexture);
 
         // Draw the ground using the Model class
-        groundModel.Draw(program);
+        groundModel.draw(program);
         // === Draw Ground end ===
 
         // === Draw Particles ===

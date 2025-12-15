@@ -3,9 +3,9 @@
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 
 #include <string>
+#include <utility>
 #include <vector>
 
 /*
@@ -48,24 +48,21 @@ public:
     unsigned int VAO;
 
     // Constructor: takes vertices, indices, and textures to create a mesh
-    Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures) {
+    Mesh(const std::vector<Vertex> &vertices, std::vector<unsigned int> indices, std::vector<Texture> textures) {
         this->vertices = vertices;
-        this->indices = indices;
-        this->textures = textures;
+        this->indices = std::move(indices);
+        this->textures = std::move(textures);
 
         // Now that we have all the required data, set the vertex buffers and its attribute pointers.
         setupMesh();
     }
 
     // Render the mesh
-    void Draw(GLuint shaderProgram) {
-        // TODO: In the future, we will bind the appropriate textures here before drawing.
-        // For now, we just draw the mesh geometry.
-
+    void draw(GLuint shaderProgram) const {
         // Bind the Vertex Array Object
         glBindVertexArray(VAO);
         // Draw the mesh using its indices
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, nullptr);
         // Always good practice to unbind VAO after drawing
         glBindVertexArray(0);
     }
@@ -95,13 +92,13 @@ private:
         // 5. Set the vertex attribute pointers
         // Vertex Positions
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), static_cast<void *>(nullptr));
         // Vertex Normals
         glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void *>(offsetof(Vertex, Normal)));
         // Vertex Texture Coords
         glEnableVertexAttribArray(2);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void *>(offsetof(Vertex, TexCoords)));
 
         // 6. Unbind VAO
         glBindVertexArray(0);
