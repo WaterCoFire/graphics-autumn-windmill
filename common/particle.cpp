@@ -3,6 +3,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <algorithm>
 #include <cstddef>
+#include <ctime>
 
 // Data structure for instanced rendering, matches layout in the shader
 struct ParticleInstanceData {
