@@ -136,12 +136,16 @@ unsigned int loadTexture(char const *path) {
     int width, height, nrComponents;
     if (unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0)) {
         GLenum format;
-        if (nrComponents == 1)
+        if (nrComponents == 1) {
             format = GL_RED;
-        else if (nrComponents == 3)
+        } else if (nrComponents == 3) {
             format = GL_RGB;
-        else if (nrComponents == 4)
+        } else if (nrComponents == 4) {
             format = GL_RGBA;
+        } else {
+            std::cout << "Unsupported image format for texture: " << path << std::endl;
+            return 0;
+        }
 
         glBindTexture(GL_TEXTURE_2D, textureID);
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
@@ -227,9 +231,10 @@ int main() {
     // Shininess
     glUniform1f(shininessLoc, 32.0f);
 
-    // === Load Models ===
+    // === Load All Models ===
     // Load models using Model class
     Model groundModel("objects/plane.obj");
+    Model treeModel("objects/Tree/Tree.obj");
 
     // === Tower (Quadrangular Frustum) ===
     GLuint towerVAO, towerVBO, towerEBO;
@@ -536,7 +541,8 @@ int main() {
     unsigned int towerTexture = loadTexture("textures/Bricks099_1K-JPG/Bricks099_1K-JPG_Color.jpg");
     unsigned int capTexture = loadTexture("textures/Bricks094_1K-JPG/Bricks094_1K-JPG_Color.jpg");
     unsigned int chimneyTexture = loadTexture("textures/PavingStones135_1K-JPG/PavingStones135_1K-JPG_Color.jpg");
-    unsigned int particleTexture = loadTexture("textures/Smoke/toppng.com-realistic-smoke-texture-with-soft-particle-edges-png-399x385.png");
+    unsigned int particleTexture = loadTexture(
+        "textures/Smoke/toppng.com-realistic-smoke-texture-with-soft-particle-edges-png-399x385.png");
 
     // === Texture Uniforms ===
     glUseProgram(program);
@@ -786,6 +792,24 @@ int main() {
         // Set u_unlit back to false (0) for other objects
         glUniform1i(unlitLoc, 0);
         // === Draw Chimney end ===
+
+        // === Draw Tree ===
+        glUniform1i(unlitLoc, 0); // Ensure lighting is enabled for the tree
+        glUniform1i(useTextureLoc, 1); // Ensure textures are enabled
+
+        model = glm::mat4(1.0f);
+        // Position the tree in the scene (e.g., to the right-front of the windmill)
+        model = glm::translate(model, glm::vec3(12.0f, 0.0f, -5.0f));
+        // Scale the tree if it's too big or too small (e.g., make it 3 times larger)
+        model = glm::scale(model, glm::vec3(3.0f));
+
+        normalMat = glm::transpose(glm::inverse(glm::mat3(model)));
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix3fv(normalMatLoc, 1, GL_FALSE, glm::value_ptr(normalMat));
+
+        // Draw the tree model
+        treeModel.draw(program);
+        // === Draw Tree end ===
 
         // === Draw Ground ===
 
