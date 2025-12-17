@@ -142,6 +142,20 @@ namespace Geometry {
         -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, -1.0f,
         1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f
     };
+
+    // === Tree Positions ===
+    // Lists of positions for each type of tree
+    inline std::vector<glm::vec3> treeA_positions = {
+        {-8.0f, 0.0f, -10.0f},
+        {-20.0f, 0.0f, -40.0f},
+        {15.0f, 0.0f, -8.0f}
+    };
+
+    inline std::vector<glm::vec3> treeB_positions = {
+        {-25.0f, 0.0f, -35.0f},
+        {30.0f, 0.0f, -45.0f},
+        {20.0f, 0.0f, -20.0f}
+    };
 }
 
 #endif //GRAPHICS_ACTION_SCENE_GEOMETRY_H

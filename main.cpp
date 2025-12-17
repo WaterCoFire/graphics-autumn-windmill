@@ -234,7 +234,8 @@ int main() {
     // === Load All Models ===
     // Load models using Model class
     Model groundModel("objects/plane.obj");
-    Model treeModel("objects/Tree/Tree.obj");
+    Model treeA_model("objects/Tree_A/Tree.obj");
+    Model treeB_model("objects/Tree_B/Tree.obj");
 
     // === Tower (Quadrangular Frustum) ===
     GLuint towerVAO, towerVBO, towerEBO;
@@ -793,23 +794,36 @@ int main() {
         glUniform1i(unlitLoc, 0);
         // === Draw Chimney end ===
 
-        // === Draw Tree ===
-        glUniform1i(unlitLoc, 0); // Ensure lighting is enabled for the tree
+        // === Draw Trees ===
+        glUniform1i(unlitLoc, 0); // Ensure lighting is enabled
         glUniform1i(useTextureLoc, 1); // Ensure textures are enabled
 
-        model = glm::mat4(1.0f);
-        // Position the tree in the scene (e.g., to the right-front of the windmill)
-        model = glm::translate(model, glm::vec3(12.0f, 0.0f, -5.0f));
-        // Scale the tree if it's too big or too small (e.g., make it 3 times larger)
-        model = glm::scale(model, glm::vec3(3.0f));
+        // --- Draw all instances of Tree A ---
+        for (const auto& pos : Geometry::treeA_positions) {
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, pos);
+            model = glm::scale(model, glm::vec3(2.0f)); // Set scale
 
-        normalMat = glm::transpose(glm::inverse(glm::mat3(model)));
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix3fv(normalMatLoc, 1, GL_FALSE, glm::value_ptr(normalMat));
+            normalMat = glm::transpose(glm::inverse(glm::mat3(model)));
+            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+            glUniformMatrix3fv(normalMatLoc, 1, GL_FALSE, glm::value_ptr(normalMat));
 
-        // Draw the tree model
-        treeModel.draw(program);
-        // === Draw Tree end ===
+            treeA_model.draw(program);
+        }
+
+        // --- Draw all instances of Tree B ---
+        for (const auto& pos : Geometry::treeB_positions) {
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, pos);
+            model = glm::scale(model, glm::vec3(1.5f)); // Set scale
+
+            normalMat = glm::transpose(glm::inverse(glm::mat3(model)));
+            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+            glUniformMatrix3fv(normalMatLoc, 1, GL_FALSE, glm::value_ptr(normalMat));
+
+            treeB_model.draw(program);
+        }
+        // === Draw Trees end ===
 
         // === Draw Ground ===
 
