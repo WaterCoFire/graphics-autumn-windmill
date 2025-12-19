@@ -6,13 +6,11 @@
 void Model::loadModel(std::string const &path) {
     // Read file via ASSIMP
     Assimp::Importer importer;
-    // aiProcess_Triangulate: If the model is not (entirely) composed of triangles, it should transform all the model's primitive shapes to triangles.
-    // aiProcess_FlipUVs: Flips the texture coordinates on the y-axis where necessary.
-    // aiProcess_GenNormals: Creates normal vectors for each vertex if the model doesn't contain them.
-    const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenNormals);
+    const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenNormals |
+                                              aiProcess_JoinIdenticalVertices | aiProcess_SortByPType | aiProcess_OptimizeMeshes);
 
     // Check for errors
-    if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
+    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
         std::cout << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
         return;
     }
@@ -37,7 +35,7 @@ void Model::processNode(const aiNode *node, const aiScene *scene) {
 }
 
 // Translates an aiMesh object to our Mesh object.
-Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene) {
+Mesh Model::processMesh(const aiMesh *mesh, const aiScene *scene) {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
     const std::vector<Texture> textures;

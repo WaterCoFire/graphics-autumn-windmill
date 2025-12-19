@@ -44,7 +44,7 @@ private:
     void processNode(const aiNode *node, const aiScene *scene);
 
     // Processes an aiMesh object and transforms it into our own Mesh object.
-    static Mesh processMesh(aiMesh *mesh, const aiScene *scene);
+    static Mesh processMesh(const aiMesh *mesh, const aiScene *scene);
 
     // (Future implementation) Checks all material textures of a given type and loads the textures if they're not loaded yet.
     // The required info is returned as a Texture struct.
