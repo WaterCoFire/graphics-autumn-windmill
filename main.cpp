@@ -237,6 +237,7 @@ int main() {
     Model treeA_model("objects/Tree_A/Tree.obj");
     Model treeB_model("objects/Tree_B/Tree.obj");
     Model cabinModel("objects/Cabin/farmhouse_obj.obj");
+    Model benchModel("objects/Bench/Bench_HighRes.obj");
 
     // === Tower (Quadrangular Frustum) ===
     GLuint towerVAO, towerVBO, towerEBO;
@@ -834,7 +835,7 @@ int main() {
         // Positioning
         model = glm::translate(model, glm::vec3(10.0f, 0.0f, -30.0f));
 
-        // Rotate the cabin 90 degrees clockwise around the Y-axis
+        // Rotation (clockwise, around the Y-axis)
         model = glm::rotate(model, glm::radians(-180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
         // Scaling
@@ -846,6 +847,54 @@ int main() {
 
         cabinModel.draw(program);
         // === Draw Cabin end ===
+
+        // === Draw Benches ===
+        glUniform1i(unlitLoc, 0); // Ensure lighting is enabled
+        glUniform1i(useTextureLoc, 1); // Ensure textures are enabled
+
+        /*
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, pos);
+        model = glm::scale(model, glm::vec3(2.0f)); // Set scale
+
+        normalMat = glm::transpose(glm::inverse(glm::mat3(model)));
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix3fv(normalMatLoc, 1, GL_FALSE, glm::value_ptr(normalMat));
+
+        treeA_model.draw(program);
+        */
+
+        // --- Bench 1 ---
+        model = glm::mat4(1.0f);
+        // Positioning
+        model = glm::translate(model, glm::vec3(6.0f, 0.0f, -12.0f));
+        // Scaling
+        model = glm::scale(model, glm::vec3(0.02f));
+
+        normalMat = glm::transpose(glm::inverse(glm::mat3(model)));
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix3fv(normalMatLoc, 1, GL_FALSE, glm::value_ptr(normalMat));
+
+        benchModel.draw(program);
+
+        // --- Bench 2 ---
+        model = glm::mat4(1.0f);
+        // Positioning
+        model = glm::translate(model, glm::vec3(10.0f, 0.0f, -8.0f));
+        // Rotation (clockwise, around the Y-axis)
+        model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        // Scaling
+        model = glm::scale(model, glm::vec3(0.02f));
+
+        normalMat = glm::transpose(glm::inverse(glm::mat3(model)));
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix3fv(normalMatLoc, 1, GL_FALSE, glm::value_ptr(normalMat));
+
+        benchModel.draw(program);
+
+        // === Draw Benches end ===
+
+
 
         // === Draw Ground ===
 
