@@ -236,6 +236,7 @@ int main() {
     Model groundModel("objects/plane.obj");
     Model treeA_model("objects/Tree_A/Tree.obj");
     Model treeB_model("objects/Tree_B/Tree.obj");
+    Model cabinModel("objects/Cabin/farmhouse_obj.obj");
 
     // === Tower (Quadrangular Frustum) ===
     GLuint towerVAO, towerVBO, towerEBO;
@@ -824,6 +825,27 @@ int main() {
             treeB_model.draw(program);
         }
         // === Draw Trees end ===
+
+        // === Draw Cabin ===
+        glUniform1i(unlitLoc, 0); // Ensure lighting is enabled
+        glUniform1i(useTextureLoc, 1); // Ensure textures are enabled
+
+        model = glm::mat4(1.0f);
+        // Positioning
+        model = glm::translate(model, glm::vec3(10.0f, 0.0f, -30.0f));
+
+        // Rotate the cabin 90 degrees clockwise around the Y-axis
+        model = glm::rotate(model, glm::radians(-180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+        // Scaling
+        model = glm::scale(model, glm::vec3(0.4f));
+
+        normalMat = glm::transpose(glm::inverse(glm::mat3(model)));
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix3fv(normalMatLoc, 1, GL_FALSE, glm::value_ptr(normalMat));
+
+        cabinModel.draw(program);
+        // === Draw Cabin end ===
 
         // === Draw Ground ===
 
