@@ -248,7 +248,7 @@ int main() {
 
     // === Load All Models ===
     // Load models using Model class
-    Model groundModel("objects/plane.obj");
+    Model groundModel("objects/Ground/plane.obj");
     Model treeA_model("objects/Tree_A/Tree.obj");
     Model treeB_model("objects/Tree_B/Tree.obj");
     Model cabinModel("objects/Cabin/farmhouse_obj.obj");
