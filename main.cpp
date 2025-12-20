@@ -1,3 +1,8 @@
+/*
+ * IMPORTANT!
+ * It is strongly recommended to run this project on a Mac (with Apple Silicon).
+ * */
+
 #include "wrapper_glfw.h"
 #include "glad.h"
 #include <glm/glm.hpp>
@@ -8,17 +13,12 @@
 #include <sstream>
 #include <vector>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
 #include "geometry.h"
 #include "model.h"
 #include "particle.h"
 
-/*
- * IMPORTANT!
- * It is recommended to run this project on a Mac (with Apple Silicon).
- * */
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 // Make sure PI value is defined
 #ifndef M_PI
@@ -801,7 +801,7 @@ int main() {
         glUniform1i(useTextureLoc, 1); // Ensure textures are enabled
 
         // --- Draw all instances of Tree A ---
-        for (const auto& pos : Geometry::treeA_positions) {
+        for (const auto &pos: Geometry::treeA_positions) {
             model = glm::mat4(1.0f);
             model = glm::translate(model, pos);
             model = glm::scale(model, glm::vec3(2.0f)); // Set scale
@@ -814,7 +814,7 @@ int main() {
         }
 
         // --- Draw all instances of Tree B ---
-        for (const auto& pos : Geometry::treeB_positions) {
+        for (const auto &pos: Geometry::treeB_positions) {
             model = glm::mat4(1.0f);
             model = glm::translate(model, pos);
             model = glm::scale(model, glm::vec3(1.5f)); // Set scale
@@ -893,7 +893,6 @@ int main() {
         benchModel.draw(program);
 
         // === Draw Benches end ===
-
 
 
         // === Draw Ground ===

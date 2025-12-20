@@ -128,7 +128,7 @@ namespace Geometry {
 
     // === Skybox ===
     constexpr float skyboxVertices[] = {
-        // positions
+        // Positions
         -1.0f, 1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, -1.0f, -1.0f,
         1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, -1.0f, 1.0f, -1.0f,
         -1.0f, -1.0f, 1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, -1.0f,
@@ -148,21 +148,22 @@ namespace Geometry {
 
     // Tree A - shorter
     inline std::vector<glm::vec3> treeA_positions = {
-        {-8.0f, 0.0f, -10.0f},
         {-20.0f, 0.0f, -40.0f},
-        {15.0f, 0.0f, -8.0f},
-        {-2.0f, 0.0f, -20.0f},
         {-15.0f, 0.0f, -18.0f},
+        {-8.0f, 0.0f, -10.0f},
+        {-2.0f, 0.0f, -20.0f},
+        {15.0f, 0.0f, -8.0f},
         {20.0f, 0.0f, -35.0f}
     };
 
     // Tree B - taller
     inline std::vector<glm::vec3> treeB_positions = {
         {-25.0f, 0.0f, -35.0f},
-        {30.0f, 0.0f, -45.0f},
-        {20.0f, 0.0f, -20.0f},
+        {-10.0f, 0.0f, -50.0f},
+        {0.0f, 0.0f, -42.0f},
         {18.0f, 0.0f, -50.0f},
-        {0.0f, 0.0f, -42.0f}
+        {20.0f, 0.0f, -20.0f},
+        {30.0f, 0.0f, -45.0f}
     };
 }
 
