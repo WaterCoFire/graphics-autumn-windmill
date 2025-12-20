@@ -17,6 +17,10 @@
 #include "model.h"
 #include "particle.h"
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -186,7 +190,7 @@ int main() {
 #endif
 
     // Create GLFW window
-    GLFWwindow *window = glfwCreateWindow(800, 600, "Autumn Windmill", nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(1280, 960, "Autumn Windmill", nullptr, nullptr);
     if (window == nullptr) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -200,6 +204,17 @@ int main() {
         return -1;
     }
     glEnable(GL_DEPTH_TEST);
+
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO &io = ImGui::GetIO();
+    (void) io;
+    ImGui::StyleColorsDark(); // Setup Dear ImGui style
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 410");
 
     // Shaders
     GLuint program = loadShader("shader.vert", "shader.frag");
@@ -590,6 +605,66 @@ int main() {
 
         glfwPollEvents(); // Handle events
 
+        // GUI panel below
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        // Create a window in the top-right corner
+        const float PAD = 10.0f;
+        const ImGuiViewport *viewport = ImGui::GetMainViewport();
+        ImVec2 work_pos = viewport->WorkPos; // Use work area to avoid menu-bar/task-bar, if any
+        ImVec2 work_size = viewport->WorkSize;
+        ImVec2 window_pos, window_pos_pivot;
+        window_pos.x = work_pos.x + work_size.x - PAD;
+        window_pos.y = work_pos.y + PAD;
+        window_pos_pivot.x = 1.0f;
+        window_pos_pivot.y = 0.0f;
+        ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
+        ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
+
+        if (ImGui::Begin("Controls", nullptr,
+                         ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize |
+                         ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing |
+                         ImGuiWindowFlags_NoNav)) {
+            ImGui::Text("Autumn Windmill by Jason Cai");
+            ImGui::Separator();
+            // --- Camera & Light Controls Info ---
+            ImGui::Text("Camera Controls: W/S/A/D/Q/E");
+            ImGui::Text("Light Controls: Arrow keys/comma/period");
+
+            ImGui::Separator();
+            ImGui::Spacing();
+
+            // --- Windmill Controls ---
+            ImGui::Text("Windmill Rotation Controls");
+            ImGui::Separator();
+
+            // Dynamic Button Text for Pause/Resume
+            const char *pauseButtonText = isBodyRotating ? "Pause Body Rotation (P)" : "Resume Body Rotation (P)";
+            if (ImGui::Button(pauseButtonText)) {
+                isBodyRotating = !isBodyRotating;
+            }
+
+            // Reverse Direction (R)
+            if (ImGui::Button("Reverse Body & Blade Direction (R)")) {
+                direction = -direction;
+            }
+
+            ImGui::Separator();
+            ImGui::Text("Rotation Speeds");
+
+            // Body Speed (+/-)
+            ImGui::SliderFloat("Body (+/-)", &mainBodyRotationSpeed, 0.0f, 500.0f);
+
+            // Blade Speed (I/K)
+            ImGui::SliderFloat("Blade (I/K)", &bladeRotationSpeed, 0.0f, 1000.0f);
+
+            ImGui::End();
+        }
+        // End of GUI panel
+
         // ESC quit
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
             glfwSetWindowShouldClose(window, true);
@@ -925,6 +1000,10 @@ int main() {
         // === Draw Particles end ===
 
         glBindVertexArray(0); // Swap buffer display
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
         glfwSwapBuffers(window);
     }
 
@@ -956,6 +1035,10 @@ int main() {
     glDeleteProgram(program);
     glDeleteProgram(skyboxProgram);
     glDeleteProgram(particleProgram);
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 
     glfwTerminate();
     return 0;

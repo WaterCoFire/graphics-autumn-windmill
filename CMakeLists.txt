@@ -47,14 +47,38 @@ if(APPLE)
 endif()
 # --- End Assimp ---
 
+# --- ImGui ---
+FetchContent_Declare(
+        imgui
+        GIT_REPOSITORY https://github.com/ocornut/imgui.git
+        GIT_TAG v1.89.9
+)
+FetchContent_MakeAvailable(imgui)
+
+# Find ImGui headers
+include_directories(
+        ${imgui_SOURCE_DIR}
+        ${imgui_SOURCE_DIR}/backends
+)
+# --- End ImGui ---
+
 # General GLAD/GLFW wrapper
-# This way, COMMON_SRC = ["common/glad.c", "common/wrapper_glfw.cpp", "common/wrapper_glfw.h"
+# This way, COMMON_SRC = ["common/glad.c", "common/wrapper_glfw.cpp", ...]
 set(COMMON_SRC
         common/glad.c
         common/wrapper_glfw.cpp
         common/wrapper_glfw.h
         common/model.cpp
         common/particle.cpp
+
+        # ImGui Sources
+        ${imgui_SOURCE_DIR}/imgui.cpp
+        ${imgui_SOURCE_DIR}/imgui_demo.cpp
+        ${imgui_SOURCE_DIR}/imgui_draw.cpp
+        ${imgui_SOURCE_DIR}/imgui_tables.cpp
+        ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+        ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
+        ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
 )
 
 # === executable ===
@@ -80,7 +104,7 @@ elseif (WIN32)
     #    )
 endif ()
 
-# Copy assets to the build directory (cmake-build-debug)
+# Copy all assets to the build directory (cmake-build-debug)
 file(COPY
         shader.vert
         shader.frag
@@ -88,10 +112,6 @@ file(COPY
         skybox.frag
         particle.vert
         particle.frag
-        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
-)
-
-file(COPY
         objects
         textures
         DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
