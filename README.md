@@ -8,7 +8,11 @@ A lovely Autumn Windmill implemented in OpenGL. I don't claim this is an A-grade
 
 By Jieshen Cai
 
+![Demo.png](Demo.png)
+
 ## Controls
+
+A GUI control panel is available in the upper-right corner of the window to control rotation-related animations.
 
 - Camera: W/S/A/D/Q/E to move (forward/back/left/right/down/up), camera always looks at the windmill
 - Light: Arrow keys left/right/up/down for x/y, comma/period for z
