@@ -12,8 +12,8 @@ void main()
     // Sample the smoke texture to get its shape (alpha)
     vec4 texColor = texture(particleTexture, TexCoords);
 
-    // Force the smoke color to be a semi-transparent gray.
-    // The final alpha is a product of the texture's alpha and the particle's lifetime alpha.
+    // Force the smoke color to be a semi-transparent gray
+    // The final alpha is a product of the texture's alpha and the particle's lifetime alpha
     color = vec4(0.6, 0.6, 0.6, texColor.a * FragColor.a);
 
     // Discard fragments that are almost fully transparent to avoid rendering artifacts

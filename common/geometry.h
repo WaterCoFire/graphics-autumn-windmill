@@ -1,5 +1,5 @@
-#ifndef GRAPHICS_ACTION_SCENE_GEOMETRY_H
-#define GRAPHICS_ACTION_SCENE_GEOMETRY_H
+#ifndef GEOMETRY_H
+#define GEOMETRY_H
 
 #pragma once
 
@@ -171,4 +171,4 @@ namespace Geometry {
     };
 }
 
-#endif //GRAPHICS_ACTION_SCENE_GEOMETRY_H
+#endif //GEOMETRY_H

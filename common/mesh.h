@@ -10,8 +10,7 @@
 
 /*
  * Vertex struct
- * A struct to hold all vertex attributes for convenience.
- * We will expand this with texture coordinates, tangents, and bitangents later.
+ * A struct to hold all vertex attributes.
  */
 struct Vertex {
     // Position
@@ -25,7 +24,7 @@ struct Vertex {
 /*
  * Texture struct
  * A struct to hold texture data.
- * This will help us manage different types of textures (diffuse, specular, etc.).
+ * Used to manage different types of textures (diffuse, specular, etc.)
  */
 struct Texture {
     GLuint id;
@@ -36,7 +35,7 @@ struct Texture {
 /*
  * Mesh Class
  * A mesh is a single drawable entity. A model can be composed of one or more meshes.
- * This class handles the setup of vertex buffers (VBO, EBO) and the vertex array object (VAO),
+ * Handles the setup of vertex buffers (VBO, EBO) and the vertex array object (VAO),
  * as well as the drawing logic.
  */
 class Mesh {
@@ -53,7 +52,7 @@ public:
         this->indices = std::move(indices);
         this->textures = std::move(textures);
 
-        // Now that we have all the required data, set the vertex buffers and its attribute pointers.
+        // Set the vertex buffers and its attribute pointers
         setupMesh();
     }
 
@@ -63,7 +62,7 @@ public:
         glBindVertexArray(VAO);
         // Draw the mesh using its indices
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, nullptr);
-        // Always good practice to unbind VAO after drawing
+        // Unbind VAO after drawing
         glBindVertexArray(0);
     }
 

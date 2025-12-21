@@ -2,7 +2,7 @@
 #include <iostream>
 #include "assimp/postprocess.h"
 
-// Loads a model from file and populates the meshes vector.
+// Loads a model from file and populates the meshes vector
 void Model::loadModel(std::string const &path) {
     // Read file via ASSIMP
     Assimp::Importer importer;
@@ -21,7 +21,7 @@ void Model::loadModel(std::string const &path) {
     processNode(scene->mRootNode, scene);
 }
 
-// Processes a node recursively.
+// Processes a node recursively
 void Model::processNode(const aiNode *node, const aiScene *scene) {
     // Process all the node's meshes (if any)
     for(unsigned int i = 0; i < node->mNumMeshes; i++) {
@@ -34,7 +34,7 @@ void Model::processNode(const aiNode *node, const aiScene *scene) {
     }
 }
 
-// Translates an aiMesh object to our Mesh object.
+// Translates an aiMesh object to our Mesh object
 Mesh Model::processMesh(const aiMesh *mesh, const aiScene *scene) {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
@@ -52,9 +52,9 @@ Mesh Model::processMesh(const aiMesh *mesh, const aiScene *scene) {
             vertex.Normal = glm::vec3(0.0f, 0.0f, 0.0f);
         }
         // Texture coordinates
-        if(mesh->mTextureCoords[0]) { // Does the mesh contain texture coordinates?
+        if(mesh->mTextureCoords[0]) { // Whether the mesh contain texture coordinates or not
             // A vertex can contain up to 8 different texture coordinates. We thus make the assumption that we won't
-            // use models where a vertex can have multiple texture coordinates so we always take the first set (0).
+            // use models where a vertex can have multiple texture coordinates so we always take the first set (0)
             vertex.TexCoords = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
         } else {
             vertex.TexCoords = glm::vec2(0.0f, 0.0f);

@@ -122,7 +122,7 @@ void ParticleSystem::update(float deltaTime, int newParticles, glm::vec3 cameraP
         if (p.life > 0.0f) {
             p.life -= deltaTime;
             if (p.life > 0.0f) {
-                // Simple, constant velocity motion. No extra forces.
+                // Simple, constant velocity motion
                 p.pos += p.speed * deltaTime;
 
                 glm::vec3 toCamera = p.pos - cameraPosition;
