@@ -6,7 +6,7 @@ A lovely Autumn Windmill implemented in OpenGL. I don't claim this is an A-grade
 
 **NOTE: This project is compatible with both Windows 11 and macOS (Apple Silicon), but it is STRONGLY recommended to run it on a Mac (with Apple Silicon).**
 
-By Jieshen Cai
+By Jason Cai
 
 ![Demo.png](Demo.png)
 
@@ -21,3 +21,41 @@ A GUI control panel is available in the upper-right corner of the window to cont
 - Windmill main body rotation speed: + to increase, - to decrease
 - R to reverse all rotation directions (main body & blades)
 - ESC to exit
+
+## Resources Used
+
+### Libraries
+
+This project utilizes the following open-source libraries:
+
+Assimp: https://www.assimp.org/
+
+Dear ImGui: https://github.com/ocornut/imgui
+
+### Textures
+
+This project utilizes the following open-source textures:
+
+Chimney: https://ambientcg.com/view?id=PavingStones135
+
+Ground: https://ambientcg.com/view?id=Grass004
+
+Skybox: https://freestylized.com/skybox/sky_15/
+
+Smoke Particle: https://toppng.com/free-image/smoke-particle-texture-PNG-free-PNG-Images_70935
+
+Windmill Cap: https://ambientcg.com/view?id=Bricks094
+
+Windmill Tower: https://ambientcg.com/view?id=Bricks099
+
+### Models
+
+This project utilizes the following open-source models:
+
+Bench: https://free3d.com/3d-model/bench-84662.html
+
+Cabin: https://free3d.com/3d-model/old-farm-house-91130.html
+
+Tree (Type A): https://free3d.com/3d-model/tree-74556.html
+
+Tree (Type B): https://free3d.com/3d-model/tree02-35663.html
